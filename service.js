@@ -4,53 +4,17 @@ const mailer = require('./mailer');
 const Joi = require('joi');
 
 class Service {
-    //Artworks
-    static getArtworks(callback){
-        Repository.fetchArtworks(function(artworks){
-            return callback(artworks);
-        });
+
+    static getArticle(id){
+        return path.resolve(`./static/articles/${id}`);
     }
 
     static getArtwork(id){
         return path.resolve(`./static/artworks/${id}`);
     }
-
-    static getFullArtwork(id, callback){
-        Repository.fetchArtwork(id, function(artwork){
-            return callback(artwork);
-        });
-    }
-
-    //Songs
-    static getSongs(callback){
-        Repository.fetchSongs(function(songs){
-            return callback(songs);
-        });
-    }
     
     static getSong(id){
         return path.resolve(`./static/tracks/${id}`);
-    }
-
-    static getFullSong(id, callback){
-        Repository.fetchSong(id, function(song){
-            return callback(song);
-        });
-    }
-    
-    //Featured songs
-    static getFeaturedSongs(callback) {
-        Repository.fetchFeaturedSongs(function (featured){
-            return callback(featured);
-        });
-    }
-
-    //Testimonials
-    static getTestimonials(callback){
-        Repository.fetchTestimonials(function (testimonials){
-            Repository.disconnect();
-            return callback(testimonials);
-        });
     }
 
     //Message send

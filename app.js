@@ -4,8 +4,8 @@ const cors = require('cors');
 const fs = require('fs');
 const https = require('https');
 var options = {
-  key: fs.readFileSync(__dirname + '/cert/selfsigned.key'),
-  cert: fs.readFileSync(__dirname + '/cert/selfsigned.crt')
+  key: fs.readFileSync('/etc/letsencrypt/live/api.mecena.net/privkey.pem'),
+  cert: fs.readFileSync('/etc/letsencrypt/live/api.mecena.net/fullchain.pem')
 };
 
 const app = express();

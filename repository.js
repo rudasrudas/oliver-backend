@@ -14,25 +14,6 @@ class Repository {
         this.connection.on("error", (err) => {
             console.log("Database connection error occured");
         });
-
-        // this.connection.connect(function(error) {
-        //     if(!!error){
-        //         console.log(error.message);
-        //     }
-        //     else {
-        //         console.log('Connected');
-        //     }
-        // });
-    }
-    
-    static disconnect(){
-        // try{
-        //      this.connection.end();
-        // }
-        // catch(ex){
-        //     console.log("Connection error occured");
-        // }
-        // console.log('Disconnected');
     }
 
     //Artworks
@@ -44,21 +25,19 @@ class Repository {
                 console.log(error);
             }
             else {
-                Repository.disconnect();
                 return callback(rows);
             }
         });
     }
 
-    static fetchArtwork(file_name, callback){
+    static fetchArtwork(id, callback){
         this.connect();
-        const query = `SELECT file_name as artwork, title, description FROM artworks WHERE file_name = ${this.connection.escape(file_name)} AND is_public = 1`;
+        const query = `SELECT file_name as artwork, title, description FROM artworks WHERE artwork_id = ${this.connection.escape(id)} AND is_public = 1`;
         this.connection.query(query, function(error, rows){
             if(!!error) {
                 console.log(error);
             }
             else {
-                Repository.disconnect();
                 return callback(rows);
             }
         });
@@ -73,21 +52,19 @@ class Repository {
                 console.log(error);
             }
             else {
-                Repository.disconnect();
                 return callback(rows);
             }
         });
     }
 
-    static fetchSong(file_name, callback){
+    static fetchSong(id, callback){
         this.connect();
-        const query = `SELECT songs.file_name as track, artist, songs.title, songs.description, artworks.file_name as cover FROM songs INNER JOIN artworks ON artworks.artwork_id = songs.cover_id WHERE songs.file_name = ${this.connection.escape(file_name)} AND songs.is_public = 1`;
+        const query = `SELECT songs.file_name as track, artist, songs.title, songs.description, artworks.file_name as cover FROM songs INNER JOIN artworks ON artworks.artwork_id = songs.cover_id WHERE songs.song_id = ${this.connection.escape(id)} AND songs.is_public = 1`;
         this.connection.query(query, function(error, rows){
             if(!!error) {
                 console.log(error);
             }
             else {
-                Repository.disconnect();
                 return callback(rows);
             }
         });
@@ -102,7 +79,6 @@ class Repository {
                 console.log(error);
             }
             else {
-                Repository.disconnect();
                 return callback(rows);
             }
         });
@@ -117,7 +93,33 @@ class Repository {
                 console.log(error);
             }
             else {
-                Repository.disconnect();
+                return callback(rows);
+            }
+        });
+    }
+
+    //Articles
+    static fetchArticles(callback){
+        this.connect();
+        const query = 'SELECT article_id, title, content, image_name, summary FROM articles WHERE is_visible = 1';
+        this.connection.query(query, function(error, rows) {
+            if(!!error) {
+                console.log(error);
+            }
+            else {
+                return callback(rows);
+            }
+        });
+    }
+
+    static fetchArticle(id, callback){
+        this.connect();
+        const query = `SELECT title, content, image_name, summary FROM articles WHERE article_id = ${this.connection.escape(id)}`;
+        this.connection.query(query, function(error, rows) {
+            if(!!error) {
+                console.log(error);
+            }
+            else {
                 return callback(rows);
             }
         });

@@ -1,3 +1,4 @@
+const Repository = require('./repository');
 const Services = require('./service');
 
 module.exports = function(app){
@@ -12,14 +13,14 @@ module.exports = function(app){
 
     //Artworks
     app.get('/artworks', (req, res) => {
-        Services.getArtworks(function(artworks){
+        Repository.fetchArtworks(function(artworks){
             res.json(artworks);
         });
     });
 
     app.get('/artwork/:id', (req, res) => {
         if (req.query.info === "true"){
-            Services.getFullArtwork(req.params.id, function(artwork){
+            Repository.fetchArtwork(req.params.id, function(artwork){
                 res.json(artwork);
             });
         }
@@ -30,19 +31,14 @@ module.exports = function(app){
 
     //Songs
     app.get('/tracks', (req, res) => {
-        try{
-            Services.getSongs(function(songs){
-                res.json(songs);
-            });
-        }
-        catch(ex){
-            
-        }
+        Repository.fetchSongs(function(songs){
+            res.json(songs);
+        });
     });
 
     app.get('/track/:id', (req, res) => {
         if (req.query.info === "true"){
-            Services.getFullSong(req.params.id, function(song){
+            Repository.fetchSong(req.params.id, function(song){
                 res.json(song);
             });
         }
@@ -53,20 +49,39 @@ module.exports = function(app){
 
     //Featured songs
     app.get('/featured', (req, res) => {
-        Services.getFeaturedSongs(function(featured){
+        Repository.fetchFeaturedSongs(function (featured){
             res.json(featured);
         });
     });
 
     //Testimonials
     app.get('/testimonials', (req, res) => {
-        Services.getTestimonials(function(testimonials){
+        Repository.fetchTestimonials(function(testimonials){
             res.json(testimonials);
         });
     });
 
+    //Articles
+    app.get('/articles', (req, res) => {
+        Repository.fetchArticles(function(articles){
+            res.json(articles);
+        });
+    });
+
+    app.get('/article/:id', (req, res) => {
+        if (req.query.info === "true"){
+            Repository.fetchArticle(req.params.id, function(article){
+                res.json(article);
+            });
+        }
+        else {
+            res.sendFile(Services.getArticle(req.params.id));
+        }
+    });
+
     //Message send
     app.post('/send-message', (req, res) => {
+        // console.log(req.socket.remoteAddress); //Getting remove address;
         res.send(Services.sendMessage(req.body));
     });
 }
