@@ -12,7 +12,7 @@ class Repository {
         });
 
         this.connection.on("error", (err) => {
-            console.log("Database connection error occured");
+            // console.log("Database connection error occured");
         });
     }
 
@@ -23,6 +23,7 @@ class Repository {
         this.connection.query(query, function(error, rows){
             if(!!error) {
                 console.log(error);
+                return null;
             }
             else {
                 return callback(rows);
@@ -36,6 +37,7 @@ class Repository {
         this.connection.query(query, function(error, rows){
             if(!!error) {
                 console.log(error);
+                return null;
             }
             else {
                 return callback(rows);
@@ -50,6 +52,7 @@ class Repository {
         this.connection.query(query, function(error, rows){
             if(!!error) {
                 console.log(error);
+                return null;
             }
             else {
                 return callback(rows);
@@ -63,6 +66,7 @@ class Repository {
         this.connection.query(query, function(error, rows){
             if(!!error) {
                 console.log(error);
+                return null;
             }
             else {
                 return callback(rows);
@@ -77,6 +81,7 @@ class Repository {
         this.connection.query(query, function(error, rows) {
             if(!!error) {
                 console.log(error);
+                return null;
             }
             else {
                 return callback(rows);
@@ -91,6 +96,7 @@ class Repository {
         this.connection.query(query, function(error, rows) {
             if(!!error) {
                 console.log(error);
+                return null;
             }
             else {
                 return callback(rows);
@@ -105,6 +111,7 @@ class Repository {
         this.connection.query(query, function(error, rows) {
             if(!!error) {
                 console.log(error);
+                return null;
             }
             else {
                 return callback(rows);
@@ -118,6 +125,7 @@ class Repository {
         this.connection.query(query, function(error, rows) {
             if(!!error) {
                 console.log(error);
+                return null;
             }
             else {
                 return callback(rows);

@@ -2,45 +2,75 @@ const path = require("path");
 const Repository = require('./repository');
 const mailer = require('./mailer');
 const Joi = require('joi');
+const fs = require('fs');
 
 class Service {
 
-    static getArticle(id){
-        return path.resolve(`./static/articles/${id}`);
-    }
+    static getImage(name, type){
+        let validTypes = //Valid directories for storing image files
+        {
+            artwork: "artworks", 
+            article: "articles"
+        }; 
 
-    static getArtwork(id){
-        return path.resolve(`./static/artworks/${id}`);
+        if(validTypes.hasOwnProperty(type)){
+            let fullPath = path.resolve(`./static/${validTypes[type]}/${name}`);
+            if (fs.existsSync(fullPath))
+                return fullPath;
+        }
+        return null;
     }
     
-    static getSong(id){
-        return path.resolve(`./static/tracks/${id}`);
+    static getTrack(name){
+        let fullPath = path.resolve(`./static/tracks/${name}`);
+        if (fs.existsSync(fullPath))
+            return fullPath;
+        else
+            return null;
     }
 
     //Message send
-    static sendMessage(sendInstance){
+    static sendMessage(sendInstance, res){
+        let minName = 3, maxName = 50;
+        let minEmail = 8, maxEmail = 100;
+        let minMessage = 15, maxMessage = 2000;
+        
         const schema = Joi.object({
-            name: Joi.string().min(3).max(50).required().label('Name'),
-            email: Joi.string().email().min(8).max(100).required().label('Email'),
-            message: Joi.string().min(15).max(1000).required().label('Message')
+            name: Joi.string().min(minName).max(maxName).required(),
+            email: Joi.string().email().min(minEmail).max(maxEmail).required(),
+            message: Joi.string().min(minMessage).max(maxMessage).required()
         });
 
-        const schemaOptions = {
-            abortEarly: "false",
-            render: "false"
+        const result = schema.validate(sendInstance, {abortEarly: "false", render: "false"});
+
+        if(result.error === undefined){
+
+            const options = {
+                from: 'hello@mecena.net',
+                to: 'hello@mecena.net',
+                subject: `Message from ${sendInstance.name}`,
+                text: `replyto: ${sendInstance.email}\nname: ${sendInstance.name}\ncontent:\n${sendInstance.message}`
+            };
+    
+            return mailer.send(res, options);
         }
-        const result = schema.validate(sendInstance, schemaOptions);
-        console.log(result.error.details);
+        else {
+            let type = result.error.details[0].type;
+            let key = result.error.details[0].context.key;
 
-        const options = {
-            from: 'hello@mecena.net',
-            to: 'hello@mecena.net',
-            subject: `Message from ${sendInstance.name}`,
-            text: `replyto: ${sendInstance.email}\nname: ${sendInstance.name}\ncontent:\n${sendInstance.message}`
-        };
+                 if (key === 'name'  && type === 'string.empty' ) return res.status(430).send("Name is required");
+            else if (key === 'name'  && type === 'string.min'   ) return res.status(431).send("Name must be at least " + minName + " characters long");
+            else if (key === 'name'  && type === 'string.max'   ) return res.status(432).send("Name must be no longer than " + maxName + " characters");
+            else if (key === 'email' && type === 'string.empty' ) return res.status(433).send("Email is required");
+            else if (key === 'email' && type === 'string.email' ) return res.status(434).send("Email is invalid");
+            else if (key === 'email' && type === 'string.email' ) return res.status(435).send("Email must be at least " + minEmail + " characters long");
+            else if (key === 'email' && type === 'string.email' ) return res.status(436).send("Email must be no longer than " + maxEmail + " characters");
+            else if (key === 'message' && type === 'string.empty' ) return res.status(437).send("Message is required");
+            else if (key === 'message' && type === 'string.min' ) return res.status(438).send("Message must be at least " + minMessage + " characters long");
+            else if (key === 'message' && type === 'string.max' ) return res.status(439).send("Message must be no longer than " + maxMessage + " characters");
+        }
 
-        mailer.send(options);
-        return 'Success';
+        return res.status(400).send("Message could not be sent. Unknown error occured.");
     }
 }
 

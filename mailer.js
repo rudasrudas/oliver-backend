@@ -18,12 +18,11 @@ transporter.verify(function (error, success) {
     }
 });
 
-module.exports.send = function send(options){
+module.exports.send = function send(res, options){
     transporter.sendMail(options, function(error, info){
-        if (error) {
-        console.log(error);
-        } else {
-        console.log('Email sent: ' + info.response);
-        }
+        if (!!error)
+            return res.status(440).send("Failed to send the message via email. Unknown error occured");
+        else
+            return res.status(200).send("Message sent");
     });
 }
