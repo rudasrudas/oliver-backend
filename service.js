@@ -7,7 +7,9 @@ const fs = require('fs');
 class Service {
 
     static getImage(name, type){
-        let validTypes = //Valid directories for storing image files
+        //Valid directories for storing image files
+        //Format -      type_to_provide: "folder_name_in_server"
+        let validTypes = 
         {
             artwork: "artworks", 
             article: "articles"

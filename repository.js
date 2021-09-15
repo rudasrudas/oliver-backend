@@ -19,7 +19,7 @@ class Repository {
     //Artworks
     static fetchArtworks(callback){
         this.connect();
-        const query = `SELECT artwork_id as id, file_name as artwork, title, description FROM artworks WHERE is_public = 1`;
+        const query = `SELECT artwork_id as id, file_name as artwork, artist, title, description FROM artworks WHERE is_public = 1`;
         this.connection.query(query, function(error, rows){
             if(!!error) {
                 console.log(error);
@@ -33,7 +33,7 @@ class Repository {
 
     static fetchArtwork(id, callback){
         this.connect();
-        const query = `SELECT file_name as artwork, title, description FROM artworks WHERE artwork_id = ${this.connection.escape(id)} AND is_public = 1`;
+        const query = `SELECT file_name as artwork, artist, title, description FROM artworks WHERE artwork_id = ${this.connection.escape(id)} AND is_public = 1`;
         this.connection.query(query, function(error, rows){
             if(!!error) {
                 console.log(error);
@@ -48,7 +48,7 @@ class Repository {
     //Songs
     static fetchSongs(callback){
         this.connect();
-        const query = `SELECT songs.song_id as id, songs.file_name as track, artist, songs.title, songs.description, artworks.file_name as cover FROM songs INNER JOIN artworks ON artworks.artwork_id = songs.cover_id WHERE songs.is_public = 1`;
+        const query = `SELECT songs.song_id as id, songs.file_name as track, songs.artist, songs.title, songs.description, artworks.file_name as cover FROM songs INNER JOIN artworks ON artworks.artwork_id = songs.cover_id WHERE songs.is_public = 1`;
         this.connection.query(query, function(error, rows){
             if(!!error) {
                 console.log(error);
@@ -62,7 +62,7 @@ class Repository {
 
     static fetchSong(id, callback){
         this.connect();
-        const query = `SELECT songs.file_name as track, artist, songs.title, songs.description, artworks.file_name as cover FROM songs INNER JOIN artworks ON artworks.artwork_id = songs.cover_id WHERE songs.song_id = ${this.connection.escape(id)} AND songs.is_public = 1`;
+        const query = `SELECT songs.file_name as track, songs.artist, songs.title, songs.description, artworks.file_name as cover FROM songs INNER JOIN artworks ON artworks.artwork_id = songs.cover_id WHERE songs.song_id = ${this.connection.escape(id)} AND songs.is_public = 1`;
         this.connection.query(query, function(error, rows){
             if(!!error) {
                 console.log(error);
