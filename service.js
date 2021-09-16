@@ -1,14 +1,20 @@
 const path = require("path");
-const Repository = require('./repository');
 const mailer = require('./mailer');
 const Joi = require('joi');
 const fs = require('fs');
+const geoip = require('geoip-country');
 
 class Service {
 
+    static fetchCountry(ip){
+        // console.log(ip);
+        return geoip.lookup(ip.replace(/^.*:/, '')).country;
+        // return null;
+    }
+
     static getImage(name, type){
         //Valid directories for storing image files
-        //Format -      type_to_provide: "folder_name_in_server"
+        //Format    -    type_to_provide: "folder_name_in_server"
         let validTypes = 
         {
             artwork: "artworks", 

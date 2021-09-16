@@ -16,7 +16,7 @@ module.exports = function(app){
     }
 
     app.get('/', (req, res) => {
-        return res.send("Server is running.");
+        return res.json(Services.fetchCountry(req.socket.remoteAddress));
     });
 
     //Raw files
@@ -93,7 +93,6 @@ module.exports = function(app){
 
     //Message send
     app.post('/send-message', (req, res) => {
-        // console.log(req.socket.remoteAddress); //Getting remove address;
         // res.send(Services.sendMessage(req.body));
         return Services.sendMessage(req.body, res);
     });
