@@ -16,7 +16,7 @@ module.exports = function(app){
     }
 
     app.get('/', (req, res) => {
-        return res.json(Services.fetchCountry(req.socket.remoteAddress));
+        return res.json(JSON.parse(Services.fetchCountry(req.socket.remoteAddress)));
     });
 
     //Raw files
@@ -93,7 +93,6 @@ module.exports = function(app){
 
     //Message send
     app.post('/send-message', (req, res) => {
-        // res.send(Services.sendMessage(req.body));
         return Services.sendMessage(req.body, res);
     });
 }

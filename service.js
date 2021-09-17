@@ -7,9 +7,19 @@ const geoip = require('geoip-country');
 class Service {
 
     static fetchCountry(ip){
-        // console.log(ip);
-        return geoip.lookup(ip.replace(/^.*:/, '')).country;
-        // return null;
+        let country = geoip.lookup(ip.replace(/^.*:/, '')).country;
+
+        const poundCountries = ['GB', 'UK', 'IE'];
+        const euroCountries = ['BE', 'BG', 'CZ', 'DK', 'DE', 'EE', 'EL', 'ES', 'FR', 'HR', 'IT', 'CY', 'LV', 'LT', 'LU', 'HU', 'MT', 'NL', 'AT', 'PL', 'PT', 'RO', 'SI', 'SK', 'FI', 'SE', 'IS', 'LI', 'NO', 'CH', 'ME', 'MK', 'AL', 'RS', 'TR', 'BA', 'XK', 'BY', 'MD', 'UA', 'RU'];
+
+        let currency = 'USD';
+        if(poundCountries.includes(country)) currency = 'GBP';
+        else if (euroCountries.includes(country)) currency = 'EUR';
+
+        return JSON.stringify({ 
+            'country': country, 
+            'currency': currency 
+        });
     }
 
     static getImage(name, type){
