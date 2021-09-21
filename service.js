@@ -6,7 +6,7 @@ const geoip = require('geoip-country');
 
 class Service {
 
-    static fetchCountry(ip){
+    static fetchUserData(ip){
         let country = geoip.lookup(ip.replace(/^.*:/, '')).country;
 
         const poundCountries = ['GB', 'UK', 'IE'];
@@ -16,10 +16,23 @@ class Service {
         if(poundCountries.includes(country)) currency = 'GBP';
         else if (euroCountries.includes(country)) currency = 'EUR';
 
-        return JSON.stringify({ 
-            'country': country, 
-            'currency': currency 
-        });
+        let productPath = path.resolve('./static/products.json');
+        if(fs.existsSync(productPath)){
+            let products = JSON.parse(fs.readFileSync(productPath));
+
+            for(let i = 0; i < products.length; i++){
+                products[i].price = products[i].prices[currency.toLowerCase()];
+                products[i].prices = undefined;
+            }
+
+            return JSON.stringify({ 
+                'country': country, 
+                'currency': currency,
+                'products': products
+            });
+        }
+
+        
     }
 
     static getImage(name, type){

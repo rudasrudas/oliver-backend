@@ -16,7 +16,7 @@ module.exports = function(app){
     }
 
     app.get('/', (req, res) => {
-        return res.json(JSON.parse(Services.fetchCountry(req.socket.remoteAddress)));
+        return res.json(JSON.parse(Services.fetchUserData(req.socket.remoteAddress)));
     });
 
     //Raw files

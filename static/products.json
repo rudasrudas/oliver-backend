@@ -1,0 +1,89 @@
+[
+    {
+        "name": "Bundle alpha",
+        "id": "bun_01",
+        "prices": {
+            "usd": 60,
+            "gbp": 55,
+            "eur": 56
+        }
+    },
+    {
+        "name": "Bundle beta",
+        "id": "bun_02",
+        "prices": {
+            "usd": 30,
+            "gbp": 25,
+            "eur": 28
+        }
+    },
+    {
+        "name": "Bundle gamma",
+        "id": "bun_03",
+        "prices": {
+            "usd": 20,
+            "gbp": 15,
+            "eur": 14
+        }
+    },
+
+
+
+    {
+        "name": "Music alpha",
+        "id": "mus_01",
+        "prices": {
+            "usd": 40,
+            "gbp": 35,
+            "eur": 30
+        }
+    },
+    {
+        "name": "Music beta",
+        "id": "mus_02",
+        "prices": {
+            "usd": 25,
+            "gbp": 20,
+            "eur": 15
+        }
+    },
+    {
+        "name": "Music gamma",
+        "id": "mus_03",
+        "prices": {
+            "usd": 15,
+            "gbp": 10,
+            "eur": 12
+        }
+    },
+
+
+
+    {
+        "name": "Design alpha",
+        "id": "des_01",
+        "prices": {
+            "usd": 35,
+            "gbp": 30,
+            "eur": 33
+        }
+    },
+    {
+        "name": "Design beta",
+        "id": "des_02",
+        "prices": {
+            "usd": 20,
+            "gbp": 15,
+            "eur": 17
+        }
+    },
+    {
+        "name": "Design gamma",
+        "id": "des_03",
+        "prices": {
+            "usd": 8,
+            "gbp": 5,
+            "eur": 7
+        }
+    }
+]
