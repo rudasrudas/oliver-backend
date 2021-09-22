@@ -3,12 +3,14 @@ const mailer = require('./mailer');
 const Joi = require('joi');
 const fs = require('fs');
 const geoip = require('geoip-country');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 class Service {
 
-    static fetchUserData(ip){
+    static async fetchUserData(ip){
         let country = geoip.lookup(ip.replace(/^.*:/, '')).country;
 
+        //Determine users currency
         const poundCountries = ['GB', 'UK', 'IE'];
         const euroCountries = ['BE', 'BG', 'CZ', 'DK', 'DE', 'EE', 'EL', 'ES', 'FR', 'HR', 'IT', 'CY', 'LV', 'LT', 'LU', 'HU', 'MT', 'NL', 'AT', 'PL', 'PT', 'RO', 'SI', 'SK', 'FI', 'SE', 'IS', 'LI', 'NO', 'CH', 'ME', 'MK', 'AL', 'RS', 'TR', 'BA', 'XK', 'BY', 'MD', 'UA', 'RU'];
 
@@ -16,20 +18,27 @@ class Service {
         if(poundCountries.includes(country)) currency = 'GBP';
         else if (euroCountries.includes(country)) currency = 'EUR';
 
+        //Set up json response
         let productPath = path.resolve('./static/products.json');
         if(fs.existsSync(productPath)){
             let products = JSON.parse(fs.readFileSync(productPath));
 
             for(let i = 0; i < products.length; i++){
-                products[i].price = products[i].prices[currency.toLowerCase()];
+                let priceId = products[i].prices[currency.toLowerCase()];
+                let stripePrice = await stripe.prices.retrieve(priceId);
+                if(stripePrice !== undefined)
+                    products[i].price = (stripePrice.unit_amount/100).toString();
+                else console.log("Price not found for id " + priceId);
                 products[i].prices = undefined;
             }
 
-            return JSON.stringify({ 
-                'country': country, 
-                'currency': currency,
-                'products': products
-            });
+            return JSON.stringify(
+                { 
+                    'country': country, 
+                    'currency': currency,
+                    'products': products
+                }
+            );
         }
 
         

@@ -1,5 +1,7 @@
+require('dotenv').config();
 const Repository = require('./repository');
 const Services = require('./service');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 module.exports = function(app){
 
@@ -15,8 +17,10 @@ module.exports = function(app){
             return res.json(element);
     }
 
-    app.get('/', (req, res) => {
-        return res.json(JSON.parse(Services.fetchUserData(req.socket.remoteAddress)));
+    app.get('/', async (req, res) => {
+        let json = JSON.parse(await Services.fetchUserData(req.socket.remoteAddress));
+        console.log(json);
+        return res.json(json);
     });
 
     //Raw files
@@ -95,4 +99,23 @@ module.exports = function(app){
     app.post('/send-message', (req, res) => {
         return Services.sendMessage(req.body, res);
     });
+
+    app.post('/checkout/create-checkout-session', async (req, res) => {
+        const session = await stripe.checkout.sessions.create({
+            line_items: [
+                {
+                    // TODO: replace this with the `price` of the product you want to sell
+                    price: 'price_1JcFXtDo9XRibKj1knGZMc4Z',
+                    quantity: req.body.quantity,
+                },
+            ],
+            payment_method_types: ['card'],
+            mode: 'payment',
+            success_url: `https://api.mecena.net/success?id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `https://api.mecena.net/cancel`,
+        })
+        res.json({
+            id: session.id
+        });
+    })
 }

@@ -1,3 +1,4 @@
+require('dotenv').config();
 const mysql = require('mysql');
 
 class Repository {
@@ -5,10 +6,10 @@ class Repository {
     //Connectivity
     static connect() {
         this.connection = mysql.createConnection({
-            host: '153.92.7.1',
-            user: 'u335144674_root',
-            password: 'YC@N6>DwZ6&k',
-            database: 'u335144674_data'
+            host: process.env.DB_HOST,
+            user: process.env.DB_USER,
+            password: process.env.DB_PASS,
+            database: process.env.DB_DATABASE
         });
 
         this.connection.on("error", (err) => {
