@@ -19,7 +19,6 @@ module.exports = function(app){
 
     app.get('/', async (req, res) => {
         let json = JSON.parse(await Services.fetchUserData(req.socket.remoteAddress));
-        console.log(json);
         return res.json(json);
     });
 
@@ -100,21 +99,28 @@ module.exports = function(app){
         return Services.sendMessage(req.body, res);
     });
     
+    //checkout
     app.post('/checkout/create-checkout-session', async (req, res) => {
         try{
             const items = req.body;
-            
             const session = await stripe.checkout.sessions.create({
                 line_items: items,
                 payment_method_types: ['card'],
                 mode: 'payment',
-                success_url: `https://new.mecena.net/success?id={CHECKOUT_SESSION_ID}`,
-                cancel_url: `https://new.mecena.net/cancel`,
+                success_url: `http://127.0.0.1:5500/checkout/success/?id={CHECKOUT_SESSION_ID}`,
+                cancel_url: `http://127.0.0.1:5500/checkout/cancel/`,
             })
             res.json({ url: session.url });
         }
         catch(e){
             res.status(500).json({ error: e.message });
         }
+    })
+
+    app.get('/checkout/success', async (req, res) => {
+        const session = await stripe.checkout.sessions.retrieve(req.query.id, {
+            expand: ['customer']
+        });
+        res.json({ name: session.customer.name, email: session.customer.email });
     })
 }

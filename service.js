@@ -42,8 +42,10 @@ class Service {
                 }
             );
         }
-
-        
+        else {
+            console.log("products.json file not found");
+            return JSON.stringify({});
+        }
     }
 
     static getImage(name, type){
