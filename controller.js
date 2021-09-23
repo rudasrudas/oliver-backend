@@ -99,23 +99,22 @@ module.exports = function(app){
     app.post('/send-message', (req, res) => {
         return Services.sendMessage(req.body, res);
     });
-
+    
     app.post('/checkout/create-checkout-session', async (req, res) => {
-        const session = await stripe.checkout.sessions.create({
-            line_items: [
-                {
-                    // TODO: replace this with the `price` of the product you want to sell
-                    price: 'price_1JcFXtDo9XRibKj1knGZMc4Z',
-                    quantity: req.body.quantity,
-                },
-            ],
-            payment_method_types: ['card'],
-            mode: 'payment',
-            success_url: `https://api.mecena.net/success?id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `https://api.mecena.net/cancel`,
-        })
-        res.json({
-            id: session.id
-        });
+        try{
+            const items = req.body;
+            
+            const session = await stripe.checkout.sessions.create({
+                line_items: items,
+                payment_method_types: ['card'],
+                mode: 'payment',
+                success_url: `https://new.mecena.net/success?id={CHECKOUT_SESSION_ID}`,
+                cancel_url: `https://new.mecena.net/cancel`,
+            })
+            res.json({ url: session.url });
+        }
+        catch(e){
+            res.status(500).json({ error: e.message });
+        }
     })
 }

@@ -26,8 +26,10 @@ class Service {
             for(let i = 0; i < products.length; i++){
                 let priceId = products[i].prices[currency.toLowerCase()];
                 let stripePrice = await stripe.prices.retrieve(priceId);
-                if(stripePrice !== undefined)
+                if(stripePrice !== undefined){
                     products[i].price = (stripePrice.unit_amount/100).toString();
+                    products[i].productId = priceId;
+                }
                 else console.log("Price not found for id " + priceId);
                 products[i].prices = undefined;
             }
