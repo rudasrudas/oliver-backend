@@ -7,6 +7,10 @@ var app = express();
 
 //Endpoints
 
+app.get("/", (req, res) => {
+    res.send("Hello, server is up!!");
+});
+
 app.get('/example', auth, (req, res) => {
     console.log("Example called");
     res.status(200).send("Hey");
