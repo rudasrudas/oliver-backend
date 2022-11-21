@@ -1,0 +1,10 @@
+{
+    "name": "oliver-package",
+    "version": "1.0.0",
+    "author": "Your Name <email@example.com>",
+    "dependencies": {
+        "express": "^4.18.2",
+        "jsonwebtoken": "^8.5.1",
+        "mongoose": "^6.7.2"
+    }
+}
