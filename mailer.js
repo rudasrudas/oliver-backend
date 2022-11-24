@@ -1,12 +1,12 @@
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
-    host: "smtp.hostinger.lt",
+    host: "[smtp server name]",
     port: 587,
     secure: false,
     auth: {
-        user: "hello@mecena.net",
-        pass: "@LD!Qz8x9WTNhR#"
+        user: "example@user.mail",
+        pass: "example-password"
     }
 });
   
@@ -26,3 +26,14 @@ module.exports.send = function send(res, options){
             return res.status(200).send("Message sent");
     });
 }
+
+// EXAMPLE USE:
+// 
+// const mailer = require('./mailer');
+// const options = {
+//     from: 'hello@example.com',
+//     to: 'hello@example.com',
+//     subject: `Email subject`,
+//     text: `Hello there, this is the content!`
+// };
+// return mailer.send(res, options);
