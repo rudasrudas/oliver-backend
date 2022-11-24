@@ -33,9 +33,9 @@ app.get("/", (req, res) => {
     res.send("<img src='http://placekitten.com/200/300'>");
 });
 
-app.get('/example', auth, (req, res) => {
-    console.log("Example called");
-    res.status(200).send("Hey");
+app.post('/example', (req, res) => {
+    console.log(req.body);
+    res.status(200).send(JSON.stringify({"info": req.body.name}));
 });
 
 app.post("/register", async (req, res) => {
