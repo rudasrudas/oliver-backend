@@ -6,8 +6,7 @@ const https = require('https');
 const fs = require('fs');
 const bp = require('body-parser');
 const cors = require('cors');
-const mailer = require('./mailer');
-
+const mailer = require("./mailer")
 
 // const { MongoClient, ServerApiVersion } = require('mongodb');
 // const uri = "mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.2vxjkke.mongodb.net/?retryWrites=true&w=majority";
@@ -24,16 +23,45 @@ app.use(cors());
 app.use(bp.json())
 app.use(bp.urlencoded({ extended: true }))
 
-var options = {
-    key: fs.readFileSync('/etc/letsencrypt/live/api.mecena.net/privkey.pem'),
-    cert: fs.readFileSync('/etc/letsencrypt/live/api.mecena.net/fullchain.pem')
-  };
+// var options = {
+//     key: fs.readFileSync('/etc/letsencrypt/live/api.mecena.net/privkey.pem'),
+//     cert: fs.readFileSync('/etc/letsencrypt/live/api.mecena.net/fullchain.pem')
+//   };
 
 //Endpoints
 
 app.get("/", (req, res) => {
     res.send("<img src='http://placekitten.com/200/300'>");
 });
+
+app.post('/send-message', (req, res) =>{
+    try{
+       // const { name, email, text } = req.body;
+
+        // if(!(name && email && text)) {
+        //     res.status(400).send("Missing user data");
+        // } 
+         
+
+        const { name }= req.body;
+        console.log(req.body.name);
+
+        var mailInfo = {
+            from: 'coliver.kea@gmail.com',
+            to: 'coliver.kea@gmail.com',
+            subject: 'Sending Email using Node.js',
+            text: 'Hiiiiiiiii ' + name
+          };
+
+       mailer.sendEmails(mailInfo);
+
+        res.status(200);
+    }
+    catch (err) {
+        console.log(err);
+    }
+});
+
 
 app.post('/example', (req, res) => {
     console.log(req.body);
