@@ -4,8 +4,8 @@ const auth = require("./auth");
 const jwt = require("jsonwebtoken");
 const https = require('https');
 const fs = require('fs');
-const bp = require('body-parser')
-const cors = require('cors')
+const bp = require('body-parser');
+const cors = require('cors');
 
 // const { MongoClient, ServerApiVersion } = require('mongodb');
 // const uri = "mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.2vxjkke.mongodb.net/?retryWrites=true&w=majority";
@@ -133,3 +133,7 @@ app.listen(80, () => console.log("HTTP Server started."));
 //   console.log("H");
 
 // https.createServer(options, app).listen(443, () => console.log("HTTPS Server started."));
+
+
+
+// require('./controller/authentication')(app);
