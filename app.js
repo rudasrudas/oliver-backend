@@ -22,10 +22,10 @@ app.use(cors());
 app.use(bp.json())
 app.use(bp.urlencoded({ extended: true }))
 
-var options = {
-    key: fs.readFileSync('/etc/letsencrypt/live/api.mecena.net/privkey.pem'),
-    cert: fs.readFileSync('/etc/letsencrypt/live/api.mecena.net/fullchain.pem')
-  };
+// var options = {
+//     key: fs.readFileSync('/etc/letsencrypt/live/api.mecena.net/privkey.pem'),
+//     cert: fs.readFileSync('/etc/letsencrypt/live/api.mecena.net/fullchain.pem')
+//   };
 
 //Endpoints
 
