@@ -1,8 +1,6 @@
 var MongoClient = require('mongodb').MongoClient;
 
-var url ="mongodb+srv://dboliver:dboliver123@cluster0.2vxjkke.mongodb.net/?retryWrites=true&w=majority";
-
-MongoClient.connect(url, function(err, db)
+MongoClient.connect(process.env.DB_URI, function(err, db)
 {
     if(err) throw err;
 
@@ -13,6 +11,5 @@ MongoClient.connect(url, function(err, db)
         if(err) throw err
         console.log("collection created");
         db.close();
-
     })
-})
+});
