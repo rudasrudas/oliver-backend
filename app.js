@@ -35,23 +35,29 @@ app.get("/", (req, res) => {
 });
 
 app.post('/send-message', (req, res) =>{
-    try{
-       const { name, email, text } = req.body;
+    try {
+        const { name, email, text } = req.body;
 
-        if(!(name && email && text)) {
-            res.status(400).send("Missing user data");
+        if(!(name && email && text) || text.length < 50) {
+            res.status(400).send("Missing data");
         } 
         else{
-        res.status(200).send("email sent");
-        console.log(req.body);
+            console.log(req.body);
 
-        var mailInfo = {
-            from: 'coliver.kea@gmail.com',
-            to: 'coliver.kea@gmail.com',
-            subject: 'Message',
-            text: `Message from  ${name} (${email}) ${text}`
-          };
-        mailer.sendEmails(mailInfo);
+            const mailInfo = {
+                from: 'Oliver <coliver.kea@gmail.com>',
+                to: process.env.EMAIL_USER,
+                replyTo: email,
+                subject: `Message from ${name}`,
+                text: `Message from ${name} (${email}):\n${text}`
+            };
+            
+            switch(mailer.send(mailInfo)){
+                case true: return res.status(200).send("Message sent"); break;
+                case false: return res.status(400).send("Failed to send message"); break;
+            }
+
+            res.status(200).send("Message sent");
         }
     }
     catch (err) {
@@ -83,7 +89,11 @@ app.post("/register", async (req, res) => {
             subject: `Hi ${name}!`,
             text: `Hello there, thanks for registering, dumbass :)`
         };
-        mailer.send(res, options);
+        const sendResult = mailer.send(options);
+        switch(sendResult){
+            case true: return res.status(200).send("Message sent"); break;
+            case false: return res.status(400).send("Failed to send message"); break;
+        }
 
         //Check if user already exists
         //Validate if user is in the database
