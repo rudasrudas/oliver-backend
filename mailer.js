@@ -69,8 +69,6 @@ function sendEmails(options){
         }
       });
 }
-sendEmails(mailOptions)
-
 module.exports = {
     sendEmails
 };
