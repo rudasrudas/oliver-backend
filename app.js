@@ -6,6 +6,8 @@ const https = require('https');
 const fs = require('fs');
 const bp = require('body-parser');
 const cors = require('cors');
+const mailer = require('./mailer');
+
 
 // const { MongoClient, ServerApiVersion } = require('mongodb');
 // const uri = "mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.2vxjkke.mongodb.net/?retryWrites=true&w=majority";
@@ -35,6 +37,7 @@ app.get("/", (req, res) => {
 
 app.post('/example', (req, res) => {
     console.log(req.body);
+    
     res.status(200).send(JSON.stringify({"info": req.body.name}));
 });
 
@@ -48,6 +51,14 @@ app.post("/register", async (req, res) => {
         if(!(email && password && name)) {
             res.status(400).send("Missing user data");
         }
+
+        const options = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: `Hi ${name}!`,
+            text: `Hello there, thanks for registering, dumbass :)`
+        };
+        mailer.send(res, options);
 
         //Check if user already exists
         //Validate if user is in the database
