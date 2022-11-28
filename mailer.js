@@ -58,10 +58,20 @@ var mailOptions = {
   text: 'That was easy!'
 };
 
-transporter.sendMail(mailOptions, function(error, info){
-  if (error) {
-    console.log(error);
-  } else {
-    console.log('Email sent: ' + info.response);
-  }
-});
+
+    
+function sendEmails(options){
+    transporter.sendMail(options, function(error, info){
+        if (error) {
+          console.log(error);
+        } else {
+          console.log('Email sent: ' + info.response);
+        }
+      });
+}
+sendEmails(mailOptions)
+
+module.exports = {
+    sendEmails
+};
+
