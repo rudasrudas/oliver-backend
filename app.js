@@ -36,26 +36,23 @@ app.get("/", (req, res) => {
 
 app.post('/send-message', (req, res) =>{
     try{
-       // const { name, email, text } = req.body;
+       const { name, email, text } = req.body;
 
-        // if(!(name && email && text)) {
-        //     res.status(400).send("Missing user data");
-        // } 
-         
-
-        const { name }= req.body;
-        console.log(req.body.name);
+        if(!(name && email && text)) {
+            res.status(400).send("Missing user data");
+        } 
+        else{
+        res.status(200).send("email sent");
+        console.log(req.body);
 
         var mailInfo = {
             from: 'coliver.kea@gmail.com',
             to: 'coliver.kea@gmail.com',
-            subject: 'Sending Email using Node.js',
-            text: 'Hiiiiiiiii ' + name
+            subject: 'Message',
+            text: `Message from  ${name} (${email}) ${text}`
           };
-
-       mailer.sendEmails(mailInfo);
-
-        res.status(200);
+        mailer.sendEmails(mailInfo);
+        }
     }
     catch (err) {
         console.log(err);
