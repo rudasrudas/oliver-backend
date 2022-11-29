@@ -8,7 +8,7 @@ MongoClient.connect(url, function(err, db)
 
     var dbo =db.db("dboliver")
 
-    dbo.createCollection("Expenses", function(err, res){
+    dbo.createCollection("Expense", function(err, res){
 
         if(err) throw err
         console.log("collection created");

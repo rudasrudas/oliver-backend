@@ -40,4 +40,10 @@ module.exports = function(app){
             console.log(err);
         }
     });
+
+    app.post("/unsubscribe", (req, res) => {
+        const { email } = req.body;
+        console.log("Unsubscribing " + email);
+        res.status(200).send("User logged in");
+    });
 }

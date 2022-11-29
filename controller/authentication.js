@@ -15,12 +15,11 @@ module.exports = function(app){
             const { name, surname, email, password } = req.body;
     
             //Validate user input
-            if(!(email && password && name)) {
+            if(!(email && password && name && surname)) {
                 res.status(400).send("Missing user data");
             }
     
-            //Check if user already exists
-            //Validate if user is in the database
+            //Check if user is in the database already
             const oldUser = await User.findOne({ email });
     
             if(oldUser){
@@ -33,24 +32,12 @@ module.exports = function(app){
             //Create user in db
             const user = await User.create({
                 name,
+                surname,
                 email: email.toLowerCase(),
                 password: encryptedPassword
             });
 
-            res.status(200).send("User registered.");
-    
-            // //Create token
-            // const token = jwt.sign(
-            //     { user_id: user._id, email},
-            //     process.env.TOKEN_KEY,
-            //     { expiresIn: "2h" }
-            // );
-    
-            // //Save user token
-            // user.token = token;
-    
-            // //Return new user
-            // res.status(201).json(user);
+            res.status(200).send("User registered");
         } catch (err) {
             console.log(err);
         }
@@ -79,6 +66,9 @@ module.exports = function(app){
     
                 //Save user token
                 user.token = token;
+
+                console.log(token);
+                console.log(jwt.verify(token, process.env.TOKEN_KEY));
     
                 //Return user
                 res.status(200).json(user);
