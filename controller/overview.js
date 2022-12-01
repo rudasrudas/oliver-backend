@@ -1,5 +1,5 @@
-const Household = require('../model/household');
-const Expense = require('../model/expenses');
+const Household = require('../model/Household0');
+const Expense = require('../model/Expense0');
 
 const auth = require("../service/auth");
 
