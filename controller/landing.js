@@ -1,7 +1,6 @@
 // const Repository = require('../repository/');
 // const Services = require('../service/');
 const auth = require('../service/auth');
-
 const mailer = require("../service/mailer");
 
 module.exports = function(app){
@@ -33,7 +32,7 @@ module.exports = function(app){
                     case false: return res.status(400).send("Failed to send message"); break;
                 }
     
-                res.status(200).send("Message sent");
+                res.status(200).send("Message sent");//still needed?
             }
         }
         catch (err) {
