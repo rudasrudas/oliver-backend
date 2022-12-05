@@ -102,24 +102,59 @@ module.exports = function(app){
               return res.status(200).send("Subscriber added");
           }
   
-          console.log(email)
-
+  
           //Create subscriber in db
           const subscriber = await Subscriber.create({
               email: email.toLowerCase(),
           });
 
-          return res.status(200).json(subscriber);
+          return res.status(200).send("OK");
       } catch (err) {
           console.log(err);
       }
     });
 
     
-    app.delete("/newsletter", (req, res) => {
-        const { email } = req.body;
-        Subscriber.delete({ email });
-        console.log("Unsubscribing " + email);
-        return res.status(200).send("User logged in");
-    });
+    //delete a subscriber by email
+    app.delete('/newsletter/:email', async(req, res) =>{
+
+      //check if user is admin
+
+
+      try{
+        const getEmail = req.params.email;
+        const subscriber = await Subscriber.findOne({ getEmail });
+        if(subscriber != null){
+          subscriber.remove();
+          res.status(200).send("subscriber is deleted");
+          console.log("subscriber is deleted")
+        }else{
+          res.status(400).send("subscriber email is invalid");
+
+        }
+      }
+      catch(err)
+      {
+        console.log(err);
+      }
+    })
+
+
+      //get all newsletter - for testing purposes
+  app.get("/newsletter", async (req, res) => {
+    try {
+      const subscriber = await Subscriber.find();
+
+      if(subscriber != null){
+        res.status(200).json(subscriber);
+      }          
+    } catch (err) {
+        console.log(err);
+        res.status(400).send("Error occured while retrieving subscribers data");
+    }
+});
+ 
+
+    
+   
 }
