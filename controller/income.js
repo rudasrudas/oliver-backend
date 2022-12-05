@@ -3,14 +3,13 @@ const Earnings = require('../model/earnings');
 
 module.exports = function(app){
 
-    
       //get all income - for testing purposes
   app.get("/income", async (req, res) => {
     try {
-      const income = await Earnings.find();
+      const earnings = await Earnings.find();
 
-      if(income != null){
-        res.status(200).json(income);
+      if(earnings != null){
+        res.status(200).json(earnings);
       }          
     } catch (err) {
         console.log(err);
