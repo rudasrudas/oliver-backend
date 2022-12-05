@@ -13,24 +13,31 @@ module.exports = function(app){
       }          
     } catch (err) {
         console.log(err);
-        res.status(400).send("Error occured while retrieving income data");
+        res.status(401).send("Error occured while retrieving income data");
     }
 });
 
-    app.post('/income', auth, async (req, res) => {
-        try {
-            const earnings = req.earnings;
+app.post("/income", async (req, res) => {
+  try {
       
-            await Earnings.findByIdAndUpdate(earnings._id, {
-                amount: req.body.amount,
-                month: req.body.month,
+      //Get user input
+      const {user_id, amount, month} = req.body;
+    
 
-            })
-      
-            res.redirect('/income')
-        } catch (err) {
-            res.status(500).send(err)
-        }
-      })
+      //Validate user input
+      if(!(user_id && amount && month)) {
+          return res.status(400).send("amount provided is invalid");
+      }
+
+      //Create subscriber in db
+      const earnings = await Earnings.create({
+          user_id: user_id.toLowerCase(),
+      });
+
+      return res.status(200).send("OK");
+  } catch (err) {
+      console.log(err);
+  }
+});
 
 }
