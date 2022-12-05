@@ -119,8 +119,6 @@ module.exports = function(app){
     app.delete('/newsletter/:email', async(req, res) =>{
 
       //check if user is admin
-
-
       try{
         const getEmail = req.params.email;
         const subscriber = await Subscriber.findOne({ getEmail });
