@@ -3,7 +3,8 @@ const Earnings = require('../model/earnings');
 
 module.exports = function(app){
 
-     //get all households - for testing purposes
+    
+      //get all income - for testing purposes
   app.get("/income", async (req, res) => {
     try {
       const income = await Earnings.find();
