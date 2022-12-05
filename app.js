@@ -6,17 +6,9 @@ app.use(bp.urlencoded({ extended: true }));
 
 //Controllers
 require('./controller/landing')(app); //Landing page endpoints
-require('./controller/overview')(app); //Login and registration page endpoints
+require('./controller/overview')(app); //System page endpoints
 require('./controller/authentication')(app); //Login and registration page endpoints
 require('./controller/household')(app); //Household endpoints
 
 require("./model/database").connect();
 app.listen(80, () => console.log("HTTP Server started.")); //HTTP server start
-
-// // For HTTPS Compatibility (unfinished)
-// const https = require('https');
-// const fs = require('fs');
-// https.createServer({
-//     key: fs.readFileSync('/etc/letsencrypt/live/api.mecena.net/privkey.pem'),
-//     cert: fs.readFileSync('/etc/letsencrypt/live/api.mecena.net/fullchain.pem')
-// }, app).listen(443, () => console.log("HTTPS Server started."));
