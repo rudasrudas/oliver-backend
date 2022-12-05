@@ -1,6 +1,7 @@
 const auth = require("../service/auth");
 const mailer = require("../service/mailer");
 
+const User = require('../model/user');
 const Subscriber = require('../model/subscriber');
 
 module.exports = function(app){
@@ -8,6 +9,24 @@ module.exports = function(app){
         try {
             const user = await auth.getUser(req);
             console.log(user);
+
+            const sub = await Subscriber.findOne({ 'email': user.email });
+            console.log(sub);
+
+            console.log(await User.aggregate([
+              {
+                $match: { email: user.email }
+              },
+              {
+                $lookup: {
+                  from: 'Subscriber',
+                  localField: 'email',
+                  foreignField: 'email',
+                  as: 'subscribtion'
+                }
+              }
+            ]));
+            
     
             const response = { 
               "balance": 12000,
@@ -46,16 +65,16 @@ module.exports = function(app){
               ] 
             } 
             
-            return res.status(200).send(JSON.stringify(response));
+            res.status(200).send(JSON.stringify(response));
         } catch (err) {
             console.log(err);
-            return res.status(400).send("Error occured while retrieving user data");
+            res.status(400).send("Error occured while retrieving user data");
         }
     });
 
-    app.get("/personal-info", auth.verify, async (res, req) => {
+    app.get("/personal-info", auth.verify, (req, res) => {
       try {
-        const user = await auth.getUser(req);
+        const user = auth.getUser(req);
         console.log(user);
 
         const response = { 
@@ -77,10 +96,10 @@ module.exports = function(app){
           ]
         } 
         
-        return res.status(200).send(JSON.stringify(response));
+        res.status(200).send(JSON.stringify(response));
       } catch (err) {
           console.log(err);
-          return res.status(400).send("Error occured while retrieving personal info");
+          res.status(400).send("Error occured while retrieving personal info");
       }
     });
 
@@ -92,14 +111,14 @@ module.exports = function(app){
   
           //Validate user input
           if(!(email)) {
-              return res.status(400).send("Email provided is invalid");
+              res.status(400).send("Email provided is invalid");
           }
   
           //Check if user is in the database already
           const oldSubscriber = await Subscriber.findOne({ email });
   
           if(oldSubscriber){
-              return res.status(200).send("Subscriber added");
+              res.status(200).send("Subscriber added");
           }
   
   
@@ -108,17 +127,16 @@ module.exports = function(app){
               email: email.toLowerCase(),
           });
 
-          return res.status(200).send("OK");
+          res.status(200).send("OK");
       } catch (err) {
           console.log(err);
       }
     });
-
     
     app.delete("/newsletter", (req, res) => {
         const { email } = req.body;
         Subscriber.delete({ email });
         console.log("Unsubscribing " + email);
-        return res.status(200).send("User logged in");
+        res.status(200).send("User logged in");
     });
 }
