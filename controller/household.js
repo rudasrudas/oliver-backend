@@ -23,6 +23,8 @@ module.exports = function(app){
 
     app.get("/household/:hhid", async (req, res) => {
         try {
+
+
           const user = auth.getUser(req);
           
           const getHhid = req.params.id;
@@ -76,12 +78,22 @@ module.exports = function(app){
     app.delete('/household/:hhid', async(req, res) =>{
 
       //check if user is admin
+
+      
+
       try{
         const getHhid = req.params.id;
         const household = await Household.findOne({ getHhid });
-        household.remove();
-        res.status(200).send("Household is deleted");
-        console.log("Household is deleted")
+        if(household != null){
+          household.remove();
+          res.status(200).send("Household is deleted");
+          console.log("Household is deleted")
+        }else{
+          res.status(400).send("Household ID is invalid");
+
+        }
+
+
 
 
 

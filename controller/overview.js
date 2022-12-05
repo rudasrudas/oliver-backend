@@ -102,13 +102,14 @@ module.exports = function(app){
               return res.status(200).send("Subscriber added");
           }
   
-  
+          console.log(email)
+
           //Create subscriber in db
-          const Subscriber = await Subscriber.create({
+          const subscriber = await Subscriber.create({
               email: email.toLowerCase(),
           });
 
-          return res.status(200).send("OK");
+          return res.status(200).json(subscriber);
       } catch (err) {
           console.log(err);
       }
