@@ -126,10 +126,44 @@ module.exports = function(app){
       }
     });
     
-    app.delete("/newsletter", (req, res) => {
-        const { email } = req.body;
-        Subscriber.delete({ email });
-        console.log("Unsubscribing " + email);
-        res.status(200).send("User logged in");
-    });
+    //delete a subscriber by email
+    app.delete('/newsletter', async(req, res) =>{
+
+      //check if user is admin
+      try{
+        const getEmail = req.body.email;
+        const subscriber = await Subscriber.findOne({ getEmail });
+        if(subscriber != null){
+          subscriber.remove();
+          res.status(200).send("subscriber is deleted");
+          console.log("subscriber is deleted")
+        }else{
+          res.status(400).send("subscriber email is invalid");
+
+        }
+      }
+      catch(err)
+      {
+        console.log(err);
+      }
+    })
+
+
+      //get all newsletter - for testing purposes
+  app.get("/newsletter", async (req, res) => {
+    try {
+      const subscriber = await Subscriber.find();
+
+      if(subscriber != null){
+        res.status(200).json(subscriber);
+      }          
+    } catch (err) {
+        console.log(err);
+        res.status(400).send("Error occured while retrieving subscribers data");
+    }
+});
+ 
+
+    
+   
 }

@@ -8,6 +8,7 @@ app.use(bp.urlencoded({ extended: true }));
 require('./controller/landing')(app); //Landing page endpoints
 require('./controller/overview')(app); //System page endpoints
 require('./controller/authentication')(app); //Login and registration page endpoints
+require('./controller/household')(app); //Household endpoints
 
 require("./model/database").connect();
 app.listen(80, () => console.log("HTTP Server started.")); //HTTP server start
