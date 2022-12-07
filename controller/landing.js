@@ -32,17 +32,11 @@ module.exports = function(app){
                     case false: return res.status(400).send("Failed to send message"); break;
                 }
     
-                res.status(200).send("Message sent");//still needed?
+                res.status(200).send("Message sent");
             }
         }
         catch (err) {
             console.log(err);
         }
-    });
-
-    app.post("/unsubscribe", (req, res) => {
-        const { email } = req.body;
-        console.log("Unsubscribing " + email);
-        res.status(200).send("User logged in");
     });
 }
