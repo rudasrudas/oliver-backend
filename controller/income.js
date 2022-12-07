@@ -13,9 +13,10 @@ module.exports = function(app){
       }          
     } catch (err) {
         console.log(err);
-        res.status(401).send("Error occured while retrieving income data");
+        res.status(400).send("Error occured while retrieving income data");
     }
 });
+
 
 app.post("/income", async (req, res) => {
   try {
