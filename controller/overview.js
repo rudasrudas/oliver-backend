@@ -6,6 +6,7 @@ const User = require('../model/user');
 const Subscriber = require('../model/subscriber');
 const HouseholdUser = require('../model/household_user.js');
 const Household = require('../model/household.js');
+const Earnings = require('../model/earnings');
 
 module.exports = function(app){
   app.get("/overview", auth.verify, async (req, res) => {
@@ -199,4 +200,70 @@ module.exports = function(app){
         res.status(400).send("Error occured while retrieving personal info");
     }
   });
+ 
+
+//INCOME
+      //get all income - for testing purposes
+      app.get("/income", async (req, res) => {
+        try {
+          const earnings = await Earnings.find();
+    
+          if(earnings != null){
+            res.status(200).json(earnings);
+          }          
+        } catch (err) {
+            console.log(err);
+            res.status(400).send("Error occured while retrieving income data");
+        }
+    });
+    
+    app.post("/income",auth.verify, async (req, res) => {
+      try {
+          
+          const user = await auth.getUser(req);
+          //Get user input
+          const {amount, month} = req.body;
+        
+    
+          //Validate user input
+          if(!(user._id && amount && month)) {
+              return res.status(400).send("amount provided is invalid");
+          }
+    
+          //update income
+          const earnings = await Earnings.create({
+            userId: user._id,
+              amount,
+              month,
+          });
+    
+          return res.status(200).send("OK");
+      } catch (err) {
+          console.log(err);
+      }
+    });
+    
+//delete a income by date 
+  app.delete('/income', async(req, res) =>{
+
+  //check if user is admin
+  try{
+    const getMonth = req.body.month;
+    const income = await Earnings.findOne({ getMonth });
+    if(income != null){
+      income.remove();
+      res.status(200).send("Income deleted successfully");
+      console.log("income is deleted")
+    }else{
+      res.status(400).send("The data provided is invalid");
+
+    }
+  }
+  catch(err)
+  {
+    console.log(err);
+  }
+})
+
+   
 }
