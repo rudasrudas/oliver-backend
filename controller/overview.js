@@ -98,16 +98,17 @@ module.exports = function(app){
         "estimatedMonthlyIncome": dbUser.estimatedMonthlyIncome,
         "newsletter": (subscription != null),
         "user": user,
-        "households": households
-        // [
-        //   { 
-        //     "hhid": "hh1234", 
-        //     "name": "My home", 
-        //     "roomSize": 12.5,
-        //     "canEdit": true,
-        //     "canLeave": true
-        //   } 
-        // ]
+        "households":
+        
+        [
+          { 
+            "hhid": "hh1234", 
+            "name": "My home", 
+            "roomSize": 12.5,
+            "canEdit": false,
+            "canLeave": false
+          } 
+        ]
       } 
       
       res.status(200).send(JSON.stringify(response));
