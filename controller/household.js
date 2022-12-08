@@ -1,4 +1,4 @@
-const Household = require('../model/Household0');
+const Household = require('../model/household');
 const auth = require("../service/auth");
 const ObjectId = require('mongodb').ObjectId;
 

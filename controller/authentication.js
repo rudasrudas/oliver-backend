@@ -67,8 +67,8 @@ module.exports = function(app){
                 //Save user token
                 user.token = token;
 
-                console.log(token);
-                console.log(jwt.verify(token, process.env.TOKEN_KEY));
+                // console.log(token);
+                // console.log(jwt.verify(token, process.env.TOKEN_KEY));
     
                 //Return user
                 res.status(200).json(user);
