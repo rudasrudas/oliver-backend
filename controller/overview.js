@@ -184,16 +184,18 @@ module.exports = function(app){
       try {
           
           //Get user input
-          const {amount, month} = req.body;
+          const {user_id, amount, month} = req.body;
         
     
           //Validate user input
-          if(!(amount && month)) {
+          if(!(user_id && amount && month)) {
               return res.status(400).send("amount provided is invalid");
           }
     
-          //Create subscriber in db
+          //update income
           const earnings = await Earnings.create({
+            user_id: user_id.toLowerCase(),
+              amount,
               month: month.toLowerCase(),
           });
     
@@ -203,5 +205,27 @@ module.exports = function(app){
       }
     });
     
+//delete a income by date 
+  app.delete('/income', async(req, res) =>{
+
+  //check if user is admin
+  try{
+    const getMonth = req.body.month;
+    const income = await Earnings.findOne({ getMonth });
+    if(income != null){
+      income.remove();
+      res.status(200).send("Income deleted successfully");
+      console.log("income is deleted")
+    }else{
+      res.status(400).send("The data provided is invalid");
+
+    }
+  }
+  catch(err)
+  {
+    console.log(err);
+  }
+})
+
    
 }
