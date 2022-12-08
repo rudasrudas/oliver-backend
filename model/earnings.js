@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const earningsSchema = new mongoose.Schema({
-    user_id: { type: String },
+    userId: { type: String },
     amount: { type: Number },
     month: {type: Date}
 })

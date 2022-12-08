@@ -22,9 +22,10 @@ const mongoose = require("mongoose");
 const houseHoldSchema = new mongoose.Schema({
     name: { type: String },
     address: { type: String },
-    join_key: {type: String},
+    joinKey: {type: String},
     currency: { type: String },
-    admin: {type: mongoose.Schema.Types.ObjectId, ref: 'user'}
+    admin: {type: mongoose.Schema.Types.ObjectId, ref: 'user'},
+    canEdit: { type: Boolean}
 })
 
 module.exports = mongoose.model("household", houseHoldSchema);

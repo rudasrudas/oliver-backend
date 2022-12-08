@@ -1,4 +1,5 @@
 const Household = require('../model/household');
+const household_user = require('../model/household_user');
 const auth = require("../service/auth");
 const ObjectId = require('mongodb').ObjectId;
 const household_service = require("../service/household");
@@ -44,8 +45,6 @@ module.exports = function(app){
 
     app.post('/household', async (req, res) =>{ //auth.verify
         try {
-
-
             const { name, address, currency } = req.body;
     
             if(!(name && address && currency)) {
@@ -54,22 +53,29 @@ module.exports = function(app){
             else{
             console.log(req.body);
 
-
             //check if user is in no more than 4 households
-          //if(household_service.isUnderFourHouseholds(user)){
+          //if(household_service.UnderFour(user)){
 
             const household = await Household.create({
                 name,
                 address,
-                join_key: new ObjectId(),
+                joinKey: new ObjectId(),
                 currency: currency.toUpperCase(),
                 admin: null,
             });
             console.log("Household created");
 
-            //Create household user
-
             res.status(200).json(household);
+
+            //Create household user
+            const new_household_user = await household_user.create({
+              householdId: household,
+              userId: null, //user+-+
+              roomSize: null,
+              balance: 0,
+              created: new Date(),
+            })
+            console.log(new_household_user);
         // }
           }
         }
@@ -83,7 +89,7 @@ module.exports = function(app){
       try{
         const user = auth.getUser(req);
         const getHhid = req.params.id;
-        const household = await Household.findOne({ getHhid });
+        const household = await Household.findOne({ "hhid": getHhid });
 
         //check if user is admin
        // if(user == household.admin){

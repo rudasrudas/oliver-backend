@@ -19,9 +19,9 @@
 const mongoose = require("mongoose");
 
 const houseHoldUserSchema = new mongoose.Schema({
-    household_id: {type: mongoose.Schema.Types.ObjectId, ref: 'household'},
-    user_id: {type: mongoose.Schema.Types.ObjectId, ref: 'user'},
-    room_size: {type: Number},
+    householdId: {type: mongoose.Schema.Types.ObjectId, ref: 'household'},
+    userId: {type: mongoose.Schema.Types.ObjectId, ref: 'user'},
+    roomSize: {type: Number},
     balance: { type: Number },
     created: {
 		type: Date,
@@ -29,4 +29,4 @@ const houseHoldUserSchema = new mongoose.Schema({
 	},
 })
 
-module.exports = mongoose.model("householdUser", houseHoldUserSchema);
+module.exports = mongoose.model("householduser", houseHoldUserSchema);
