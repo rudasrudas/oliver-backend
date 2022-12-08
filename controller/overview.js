@@ -9,44 +9,115 @@ const HouseholdUser = require('../model/household_user.js');
 const Household = require('../model/household.js');
 const Earnings = require('../model/earnings');
 
+async function getPersonalInfoHouseholds(uid){
+  const householdUsers = await HouseholdUser.find({ user_id: mongoose.Types.ObjectId(uid) });
+
+  let hhIds = [];
+  householdUsers.forEach((hhu) => { hhIds.push(mongoose.Types.ObjectId(hhu.household_id)) });
+  const households = await Household.find({ _id: { $in: hhIds } });
+
+  let jsonHouseholds = []; 
+  households.forEach((hh) => {
+    try {
+      const hhu = householdUsers.filter((e) => {
+        return mongoose.Types.ObjectId(e.user_id).equals(mongoose.Types.ObjectId(uid)) &&
+               mongoose.Types.ObjectId(e.household_id).equals(mongoose.Types.ObjectId(hh._id));
+      })[0];
+
+      if(hh && hhu){
+        jsonHouseholds.push({
+          "hhid": hh._id,
+          "name": hh.name,
+          "roomSize": hhu.room_size,
+          "canEdit": hh.allow_edit,
+          "canLeave": (hhu.balance >= 0)
+        });
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  });
+
+  return jsonHouseholds;
+}
+
+async function getOverviewHouseholds(uid){
+  const householdUsers = await HouseholdUser.find({ user_id: mongoose.Types.ObjectId(uid) });
+
+  let hhIds = [];
+  householdUsers.forEach((hhu) => { hhIds.push(mongoose.Types.ObjectId(hhu.household_id)) });
+  const households = await Household.find({ _id: { $in: hhIds } });
+
+  let jsonHouseholds = []; 
+  for await (const hh of households){
+    try {
+      const hhu = householdUsers.filter((e) => {
+        return mongoose.Types.ObjectId(e.user_id).equals(mongoose.Types.ObjectId(uid)) &&
+               mongoose.Types.ObjectId(e.household_id).equals(mongoose.Types.ObjectId(hh._id));
+      })[0];
+
+      if(hh && hhu){
+        let jsonUsers = await getUsers(hh._id);
+        //Remove logged in user from the user list
+        jsonUsers = jsonUsers.filter((e) => { return !mongoose.Types.ObjectId(e._id).equals(mongoose.Types.ObjectId(uid)) });
+
+        jsonHouseholds.push({
+          "hhid": hh._id,
+          "name": hh.name,
+          "balance": hhu.balance,
+          "users": jsonUsers
+        });
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+  
+  return jsonHouseholds;
+
+}
+
+async function getUsers(hhid){
+  const householdChildren = await HouseholdUser.find({ household_id: mongoose.Types.ObjectId(hhid) });
+  let uIds = [];
+  householdChildren.forEach((hhu) => { uIds.push(mongoose.Types.ObjectId(hhu.user_id)) });
+  return await User.find({ _id: { $in: uIds }});
+}
+
+async function getOverviewExpenses(uid){
+
+  return [];
+}
+
 module.exports = function(app){
   app.get("/overview", auth.verify, async (req, res) => {
       try {
           const user = await auth.getUser(req);
+          const dbUser = await User.findOne({ 'email': user.email });
           
-          const joined = await User.aggregate([
-            {
-              $match: { email: user.email }
-            },
-            {
-              $lookup: {
-                from: 'subscribers',
-                localField: 'email',
-                foreignField: 'email',
-                as: 'subscribtion'
-              }
-            }
-          ]);
+          // const joined = await User.aggregate([
+          //   {
+          //     $match: { email: user.email }
+          //   },
+          //   {
+          //     $lookup: {
+          //       from: 'subscribers',
+          //       localField: 'email',
+          //       foreignField: 'email',
+          //       as: 'subscribtion'
+          //     }
+          //   }
+          // ]);
+
+          const jsonHouseholds = await getOverviewHouseholds(dbUser._id);
+          const jsonExpenses = await getOverviewExpenses(dbUser._id);
   
           const response = { 
-            "balance": 12000,
+            "balance": dbUser.balance,
             "user": user,
-            "households": [ 
-              { 
-                "hhid": "hh1234", 
-                "name": "My home", 
-                "balance": -200, 
-                "users": [ 
-                  { 
-                    "uid": "u1234", 
-                    "name": "John", 
-                      "surname": "Doe",
-                      "email": "john@doe.com" 
-                  } 
-                ] 
-              } 
-            ], 
-            "expenses": [ 
+            "households": jsonHouseholds,
+            "expenses": jsonExpenses
+              // [ 
               // { 
               //   "eid": "e1234", 
               //   "user": { 
@@ -62,7 +133,7 @@ module.exports = function(app){
               //     "title": "Shopping" 
               //   } 
               // } 
-            ] 
+              // ] 
           } 
           
           res.status(200).send(JSON.stringify(response));
@@ -77,47 +148,13 @@ module.exports = function(app){
       const user = await auth.getUser(req);
       const dbUser = await User.findOne({ 'email': user.email });
       const subscription = await Subscriber.findOne({ 'email': user.email });
-      const householdUsers = await HouseholdUser.find({ "user_id": mongoose.Types.ObjectId(dbUser._id) });
-      console.log("HHU:" + householdUsers);
-      let households = []; 
-      householdUsers.forEach(async (hhu) => {
-        try {
-          if(hhu){
-            const hh = await Household.findOne({ _id: hhu.household_id });
-            console.log("new House" + hh);
-            if(hh){
-              const hhJson = {
-                "hhid": hh._id,
-                "name": hh.name,
-                "roomSize": hhu.roomSize,
-                "canEdit": hh.allowEdit,
-                "canLeave": (hhu.balance >= 0)
-              }
-              households.push(hhJson);
-            }
-          }
-        } catch (err) {
-          
-        }
-      });
-
-      console.log("HOUSEHOLDS: " + households);
+      const jsonHouseholds = await getPersonalInfoHouseholds(dbUser._id);
 
       const response = { 
         "estimatedMonthlyIncome": dbUser.estimatedMonthlyIncome,
         "newsletter": (subscription != null),
         "user": user,
-        "households": households
-        
-        // [
-        //   { 
-        //     "hhid": "hh1234", 
-        //     "name": "My home", 
-        //     "roomSize": 12.5,
-        //     "canEdit": false,
-        //     "canLeave": false
-        //   } 
-        // ]
+        "households": jsonHouseholds
       } 
       
       res.status(200).send(JSON.stringify(response));
@@ -183,25 +220,13 @@ module.exports = function(app){
       }
 
       //Generate response
-      const householdUsers = await HouseholdUser.find({ 'userId': dbUser._id });
-      const households = []; 
-      householdUsers.forEach(async (hhu) => {
-        const hh = await Household.findById(hhu.householdId);
-        const hhJson = {
-          "hhid": hh._id,
-          "name": hh.name,
-          "roomSize": hhu.roomSize,
-          "canEdit": hh.allowEdit,
-          "canLeave": (hhu.balance >= 0)
-        }
-        households.push(hhJson);
-      });
+      const jsonHouseholds = await getPersonalInfoHouseholds(dbUser._id);
 
       const response = { 
         "estimatedMonthlyIncome": dbUser.estimatedMonthlyIncome,
         "newsletter": subscribed,
         "user": user,
-        "households": households
+        "households": jsonHouseholds
       } 
       
       res.status(200).send(JSON.stringify(response));
@@ -211,72 +236,65 @@ module.exports = function(app){
     }
   });
  
+  //INCOME
+  //get all income - for testing purposes
+  app.get("/income", async (req, res) => {
+    try {
+      const earnings = await Earnings.find();
 
-//INCOME
-      //get all income - for testing purposes
-      app.get("/income", async (req, res) => {
-        try {
-          const earnings = await Earnings.find();
-    
-          if(earnings != null){
-            res.status(200).json(earnings);
-          }          
-        } catch (err) {
-            console.log(err);
-            res.status(400).send("Error occured while retrieving income data");
-        }
-    });
-
-    //POST INCOME
-    
-    app.post("/income",auth.verify, async (req, res) => {
-      try {
-          
-          const user = await auth.getUser(req);
-          //Get user input
-          const {amount, month} = req.body;
-        
-    
-          //Validate user input
-          if(!(user._id && amount && month)) {
-              return res.status(400).send("amount provided is invalid");
-          }
-    
-          //update income
-          const earnings = await Earnings.create({
-            userId: user._id,
-              amount,
-              month,
-          });
-    
-          return res.status(200).send("OK");
-      } catch (err) {
-          console.log(err);
-      }
-    });
-    
-//delete a income by date 
-
-  app.delete('/income', async(req, res) =>{
-
-  //check if user is admin
-  try{
-    const getMonth = req.body.month;
-    const income = await Earnings.findOne({ getMonth });
-    if(income != null){
-      income.remove();
-      res.status(200).send("Income deleted successfully");
-      console.log("income is deleted")
-    }else{
-      res.status(400).send("The data provided is invalid");
-
+      if(earnings != null){
+        res.status(200).json(earnings);
+      }          
+    } catch (err) {
+      console.log(err);
+      res.status(400).send("Error occured while retrieving income data");
     }
-  }
-  catch(err)
-  {
-    console.log(err);
-  }
-})
+  });
 
-   
+  app.post("/income",auth.verify, async (req, res) => {
+    try {
+        
+        const user = await auth.getUser(req);
+        //Get user input
+        const {amount, month} = req.body;
+      
+  
+        //Validate user input
+        if(!(user._id && amount && month)) {
+            return res.status(400).send("amount provided is invalid");
+        }
+  
+        //update income
+        const earnings = await Earnings.create({
+          userId: user._id,
+            amount,
+            month,
+        });
+  
+        return res.status(200).send("OK");
+    } catch (err) {
+        console.log(err);
+    }
+  });
+    
+  //delete a income by date 
+  app.delete('/income', async(req, res) =>{
+    //check if user is admin
+    try{
+      const getMonth = req.body.month;
+      const income = await Earnings.findOne({ getMonth });
+      if(income != null){
+        income.remove();
+        res.status(200).send("Income deleted successfully");
+        console.log("income is deleted")
+      }else{
+        res.status(400).send("The data provided is invalid");
+
+      }
+    }
+    catch(err)
+    {
+      console.log(err);
+    }
+  });
 }
