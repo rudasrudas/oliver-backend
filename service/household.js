@@ -1,20 +1,28 @@
 const Household_user = require('../model/household_user');
 
-function isUnderFourHouseholds(user){
-//get all household users
-//check how many is the same user
-const household_users = Household_user.find();
-var count = 0;
-household_users.forEach(hUser => {
-    if(hUser == user){
-        count ++;
-    }   
-});
-    if(count < 5){
+ function isUnderFourHouseholds(user){
+// //get all household users
+// //check how many is the same user
+// const household_users = Household_user.find();
+// var count = 0;
+// household_users.forEach(hUser => {
+//     if(hUser == user){
+//         count ++;
+//     }   
+// });
+//     if(count < 5){
+//         return true;
+//     }
+//     return false;
+}
+
+function underFour(user){
+    if(user.household_users < 5){
         return true;
     }
     return false;
 }
+
 
 function isHouseholdMember(user, household){
 //get household members
@@ -34,4 +42,4 @@ const household_users = Household_user.find();
 }
 
 
-module.exports = {isUnderFourHouseholds, isHouseholdMember};
+module.exports = {isUnderFourHouseholds, isHouseholdMember, underFour};

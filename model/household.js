@@ -19,13 +19,13 @@
 
 const mongoose = require("mongoose");
 
-const houseHoldSchema = new mongoose.Schema({
-    _id: { type: mongoose.Schema.Types.ObjectId },
+const householdSchema = new mongoose.Schema({
     name: { type: String },
     address: { type: String },
     joinKey: {type: String},
     currency: { type: String },
-    admin: {type: mongoose.ObjectId, ref: 'user'}
+    admin: { type: mongoose.ObjectId, ref: 'user' },
+    allowEdit: { type: Boolean }
 })
 
-module.exports = mongoose.model("household", houseHoldSchema);
+module.exports = mongoose.model("household", householdSchema);
