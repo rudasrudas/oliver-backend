@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const earningsSchema = new mongoose.Schema({
     user_id: { type: String },
-    amount: { type: Number },
+    amount: { type: Double },
     month: {type: Date}
 })
 
