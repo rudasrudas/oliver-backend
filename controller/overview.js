@@ -249,10 +249,12 @@ module.exports = function(app){
 
   app.delete('/income', async(req, res) =>{
 
-  //check if user is admin
+  
+
   try{
     const getMonth = req.body.month;
-    const income = await Earnings.findOne({ getMonth });
+    //add user id
+    const income = await Earnings.findOne({ 'month': getMonth });
     if(income != null){
       income.remove();
       res.status(200).send("Income deleted successfully");
