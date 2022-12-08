@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 
 const householdUserSchema = new mongoose.Schema({
-    householdId: { type: mongoose.Schema.ObjectId, ref: 'household' },
-    userId: { type: mongoose.Schema.ObjectId, ref: 'user' },
+    household_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Household' },
+    user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     roomSize: { type: Number },
     balance: { type: Number },
     created: { type: Date, default: Date.now }

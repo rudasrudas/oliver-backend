@@ -1,6 +1,7 @@
 const auth = require("../service/auth");
 const mailer = require("../service/mailer");
 const bcrypt = require("bcrypt");
+const mongoose = require("mongoose");
 
 const User = require('../model/user');
 const Subscriber = require('../model/subscriber');
@@ -76,39 +77,47 @@ module.exports = function(app){
       const user = await auth.getUser(req);
       const dbUser = await User.findOne({ 'email': user.email });
       const subscription = await Subscriber.findOne({ 'email': user.email });
-      const householdUsers = await HouseholdUser.find({ });
-      console.log("HH:" + householdUsers);
-      // const householdUsers = await HouseholdUser.find({ 'userId': dbUser._id });
-      const households = []; 
+      const householdUsers = await HouseholdUser.find({ "user_id": mongoose.Types.ObjectId(dbUser._id) });
+      console.log("HHU:" + householdUsers);
+      let households = []; 
       householdUsers.forEach(async (hhu) => {
-        const hh = await Household.findById(hhu.householdId);
-        const hhJson = {
-          "hhid": hh._id,
-          "name": hh.name,
-          "roomSize": hhu.roomSize,
-          "canEdit": hh.allowEdit,
-          "canLeave": (hhu.balance >= 0)
+        try {
+          if(hhu){
+            const hh = await Household.findOne({ _id: hhu.household_id });
+            console.log("new House" + hh);
+            if(hh){
+              const hhJson = {
+                "hhid": hh._id,
+                "name": hh.name,
+                "roomSize": hhu.roomSize,
+                "canEdit": hh.allowEdit,
+                "canLeave": (hhu.balance >= 0)
+              }
+              households.push(hhJson);
+            }
+          }
+        } catch (err) {
+          
         }
-        households.push(hhJson);
       });
-      // console.log("HOUSEHOLDS: ");
-      // console.log(households);
+
+      console.log("HOUSEHOLDS: " + households);
 
       const response = { 
         "estimatedMonthlyIncome": dbUser.estimatedMonthlyIncome,
         "newsletter": (subscription != null),
         "user": user,
-        "households":
+        "households": households
         
-        [
-          { 
-            "hhid": "hh1234", 
-            "name": "My home", 
-            "roomSize": 12.5,
-            "canEdit": false,
-            "canLeave": false
-          } 
-        ]
+        // [
+        //   { 
+        //     "hhid": "hh1234", 
+        //     "name": "My home", 
+        //     "roomSize": 12.5,
+        //     "canEdit": false,
+        //     "canLeave": false
+        //   } 
+        // ]
       } 
       
       res.status(200).send(JSON.stringify(response));
@@ -250,12 +259,10 @@ module.exports = function(app){
 
   app.delete('/income', async(req, res) =>{
 
-  
-
+  //check if user is admin
   try{
     const getMonth = req.body.month;
-    //add user id
-    const income = await Earnings.findOne({ 'month': getMonth });
+    const income = await Earnings.findOne({ getMonth });
     if(income != null){
       income.remove();
       res.status(200).send("Income deleted successfully");
