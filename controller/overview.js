@@ -180,23 +180,24 @@ module.exports = function(app){
         }
     });
     
-    app.post("/income", async (req, res) => {
+    app.post("/income",auth.verify, async (req, res) => {
       try {
           
+          const user = await auth.getUser(req);
           //Get user input
-          const {user_id, amount, month} = req.body;
+          const {amount, month} = req.body;
         
     
           //Validate user input
-          if(!(user_id && amount && month)) {
+          if(!(user._id && amount && month)) {
               return res.status(400).send("amount provided is invalid");
           }
     
           //update income
           const earnings = await Earnings.create({
-            user_id: user_id.toLowerCase(),
+            userId: user._id,
               amount,
-              month: month.toLowerCase(),
+              month,
           });
     
           return res.status(200).send("OK");
