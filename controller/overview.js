@@ -216,6 +216,8 @@ module.exports = function(app){
             res.status(400).send("Error occured while retrieving income data");
         }
     });
+
+    //POST INCOME
     
     app.post("/income",auth.verify, async (req, res) => {
       try {
@@ -244,6 +246,7 @@ module.exports = function(app){
     });
     
 //delete a income by date 
+
   app.delete('/income', async(req, res) =>{
 
   //check if user is admin
