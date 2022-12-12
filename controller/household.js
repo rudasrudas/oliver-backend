@@ -162,12 +162,16 @@ module.exports = function(app){
   })
 
 //JOIN HOUSEHOLD
-app.post('join/household/:hhid', auth.verify, async (req, res) =>{ //auth.verify
+app.post('/join/household/:hhid', auth.verify, async (req, res) =>{ //auth.verify
 
   try {
 
     const user = await auth.getUser(req);
     const key = req.params.key;
+    const hhid = req.params.hhid;
+
+    if(!hhid || hhid.length !== 24) return res.status(400).send("Household doesn't exist"); 
+
 
     const household = await Household.findOne({ '_id':  mongoose.Types.ObjectId(hhid)});
     if(!household) return res.status(403).send("Household access is invitation only");
@@ -178,6 +182,8 @@ app.post('join/household/:hhid', auth.verify, async (req, res) =>{ //auth.verify
     const householdUser = await HouseholdUser.findOne({ 'household_id': household._id, 'user_id': caller._id });
     if(householdUser) return res.status(200).send("User joined household");
     
+
+
     if(key !== household.join_key) return res.status(400).send("Key is incorrect for the household");
 
     HouseholdUser.create({
