@@ -24,7 +24,7 @@ const householdSchema = new mongoose.Schema({
     address: { type: String },
     join_key: {type: String},
     currency: { type: String },
-    admin: { type: mongoose.ObjectId, ref: 'user' },
+    admin: { type: mongoose.ObjectId, ref: 'User' },
     allow_edit: { type: Boolean }
 })
 

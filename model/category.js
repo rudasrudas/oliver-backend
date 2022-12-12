@@ -1,15 +1,8 @@
-var MongoClient = require('mongodb').MongoClient;
+const mongoose = require("mongoose");
 
-MongoClient.connect(process.env.DB_URI, function(err, db)
-{
-    if(err) throw err;
+const categorySchema = new mongoose.Schema({
+    title: { type: String },
+    icon: { type: String }
+})
 
-    var dbo =db.db("dboliver")
-
-    dbo.createCollection("Category", function(err, res){
-
-        if(err) throw err
-        console.log("collection created");
-        db.close();
-    })
-});
+module.exports = mongoose.model("category", categorySchema);

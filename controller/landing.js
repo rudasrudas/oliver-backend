@@ -77,10 +77,10 @@ module.exports = function(app){
         const subscriber = await Subscriber.findOne({ 'email': getEmail });
 
         if(subscriber){
-        subscriber.remove();
-        res.status(200).send("Unsubscribed successfully");
+            subscriber.remove();
+            res.status(200).send("Unsubscribed successfully");
         } else {
-        res.status(400).send("Subscriber email is invalid");
+            res.status(400).send("Subscriber email is invalid");
         }
     }
     catch(err)

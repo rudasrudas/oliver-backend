@@ -5,7 +5,7 @@ const householdUserSchema = new mongoose.Schema({
     user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     room_size: { type: Number },
     balance: { type: Number },
-    created: { type: Date, default: Date.now }
+    created: { type: Date }
 })
 
 module.exports = mongoose.model("household_user", householdUserSchema);

@@ -8,6 +8,9 @@ const Subscriber = require('../model/subscriber');
 const HouseholdUser = require('../model/household_user.js');
 const Household = require('../model/household.js');
 const Earnings = require('../model/earnings');
+const Category = require('../model/category');
+const ExpensePayer = require('../model/expense_payer');
+const Expense = require('../model/expense');
 
 async function getPersonalInfoHouseholds(uid){
   const householdUsers = await HouseholdUser.find({ user_id: mongoose.Types.ObjectId(uid) });
@@ -114,7 +117,12 @@ module.exports = function(app){
   
           const response = { 
             "balance": dbUser.balance,
-            "user": user,
+            "user": {
+              "uid": dbUser._id,
+              "name": user.name,
+              "surname": user.surname,
+              "email": user.email
+            },
             "households": jsonHouseholds,
             "expenses": jsonExpenses
               // [ 
@@ -141,6 +149,30 @@ module.exports = function(app){
           console.log(err);
           res.status(400).send("Error occured while retrieving user data");
       }
+  });
+
+  app.post("/expense", auth.verify, async (req, res) => {
+    try {
+      const hhid = req.query.household;
+      const user = await auth.getUser(req);
+      const { cid, date, amount, payers, recurring } = req.body;
+
+      if(!(cid && date && amount && payers && recurring)) return res.status(400).send("Insufficient data provided");
+
+      const dbUser = await User.findOne({ 'email': user.email });
+      if(!dbUser) return res.status(403).send("Logged in user does not have access to this function");
+
+      const category = await Category.findOne({ '_id': mongoose.Types.ObjectId(cid)});
+      if(!category) return res.status(400).send("Category not found");
+
+      const payDate = Date.parse(date);
+      if(!payDate) return res.status(400).send("Date is invalid");
+
+
+
+    } catch(err) {
+      return res.status(400).send("Error occured while submitting an expense");
+    }
   });
 
   app.get("/personal-info", auth.verify, async (req, res) => {
