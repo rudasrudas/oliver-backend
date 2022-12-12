@@ -159,5 +159,43 @@ module.exports = function(app){
       console.log(err);
       res.status(400).send("Failed to remove user from a household");
     }
-  });
+  })
+
+//JOIN HOUSEHOLD
+app.post('join/household/:hhid', auth.verify, async (req, res) =>{ //auth.verify
+
+  try {
+
+    const user = await auth.getUser(req);
+    const key = req.params.key;
+
+    const household = await Household.findOne({ '_id':  mongoose.Types.ObjectId(hhid)});
+    if(!household) return res.status(403).send("Household access is invitation only");
+
+    const caller = await User.findOne({ 'email': user.email });
+    if(!caller) return res.status(403).send("Logged in user does not have access to this function");
+  
+    const householdUser = await HouseholdUser.findOne({ 'household_id': household._id, 'user_id': caller._id });
+    if(householdUser) return res.status(200).send("User joined household");
+    
+    if(key !== household.join_key) return res.status(400).send("Key is incorrect for the household");
+
+    HouseholdUser.create({
+      "household_id": household._id,
+      "user_id": caller._id,
+      "room_size": 0,
+      "balance": 0,
+      "created": Date.now()
+    })
+
+    return res.status(200).send("User joined household")
+    
+  } catch (err) {
+      console.log(err);
+      res.status(400).send("Failed to join the household");
+  }
+
+
+});
+
 }
