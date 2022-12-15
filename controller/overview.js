@@ -11,6 +11,7 @@ const Earnings = require('../model/earnings');
 const Category = require('../model/category');
 const ExpensePayer = require('../model/expense_payer');
 const Expense = require('../model/expense');
+const RecurringExpense = require('../model/recurring_expense');
 
 async function getPersonalInfoHouseholds(uid){
   const householdUsers = await HouseholdUser.find({ user_id: mongoose.Types.ObjectId(uid) });
@@ -62,13 +63,17 @@ async function getOverviewHouseholds(uid){
       if(hh && hhu){
         let jsonUsers = await getUsers(hh._id);
         //Remove logged in user from the user list
-        jsonUsers = jsonUsers.filter((e) => { return !mongoose.Types.ObjectId(e._id).equals(mongoose.Types.ObjectId(uid)) });
+        // jsonUsers = jsonUsers.forEach(e => { 
+        //   if(mongoose.Types.ObjectId(e._id).equals(mongoose.Types.ObjectId(uid)))
+        //     e['caller'] = true;
+        // });
 
         jsonHouseholds.push({
           "hhid": hh._id,
           "name": hh.name,
           "balance": hhu.balance,
-          "users": jsonUsers
+          "users": jsonUsers,
+          "self": uid
         });
       }
     } catch (err) {
@@ -88,8 +93,40 @@ async function getUsers(hhid){
 }
 
 async function getOverviewExpenses(uid){
+  const expenses = await Expense.aggregate([
+    {
+      $match: { 'user_id': mongoose.Types.ObjectId(uid) }
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'user_id',
+        foreignField: '_id',
+        as: 'user'
+      }
+    },
+    {
+      $lookup: {
+        from: 'categories',
+        localField: 'category_id',
+        foreignField: '_id',
+        as: 'category'
+      }
+    }
+  ]);
 
-  return [];
+  const jsonExpenses = [];
+  expenses.forEach(expense => {
+    jsonExpenses.push({
+      "eid": expense._id,
+      "user": expense.user,
+      "amount": expense.amount,
+      "date": expense.date,
+      "category": expense.category
+    });
+  });
+
+  return jsonExpenses;
 }
 
 module.exports = function(app){
@@ -97,24 +134,11 @@ module.exports = function(app){
       try {
           const user = await auth.getUser(req);
           const dbUser = await User.findOne({ 'email': user.email });
-          
-          // const joined = await User.aggregate([
-          //   {
-          //     $match: { email: user.email }
-          //   },
-          //   {
-          //     $lookup: {
-          //       from: 'subscribers',
-          //       localField: 'email',
-          //       foreignField: 'email',
-          //       as: 'subscribtion'
-          //     }
-          //   }
-          // ]);
+          const categories = await Category.find({});
 
           const jsonHouseholds = await getOverviewHouseholds(dbUser._id);
           const jsonExpenses = await getOverviewExpenses(dbUser._id);
-  
+
           const response = { 
             "balance": dbUser.balance,
             "user": {
@@ -124,24 +148,8 @@ module.exports = function(app){
               "email": user.email
             },
             "households": jsonHouseholds,
+            "categories": categories,
             "expenses": jsonExpenses
-              // [ 
-              // { 
-              //   "eid": "e1234", 
-              //   "user": { 
-              //     "uid": "u1234", 
-              //     "name": "John", 
-              //     "surname": "Doe", 
-              //     "email": "john@doe.com" 
-              //   }, 
-              //   "amount": 250, 
-              //   "date": "UTC2022-12-01T00:00", 
-              //   "category": { 
-              //     "cid": "c123", 
-              //     "title": "Shopping" 
-              //   } 
-              // } 
-              // ] 
           } 
           
           res.status(200).send(JSON.stringify(response));
@@ -155,26 +163,94 @@ module.exports = function(app){
     try {
       const hhid = req.query.household;
       const user = await auth.getUser(req);
-      const { cid, reqDate, amount, reqPayers, recurring } = req.body;
+      const { cid, amount, payers, recurring } = req.body;
+      console.log(recurring);
 
-      if(!(cid && reqDate && amount && reqPayers && recurring)) return res.status(400).send("Insufficient data provided");
+      if(!(cid && amount && payers)) return res.status(400).send("Insufficient data provided");
 
       const dbUser = await User.findOne({ 'email': user.email });
       if(!dbUser) return res.status(403).send("Logged in user does not have access to this function");
 
+      let household;
+      if(hhid){
+        if(hhid.length !== 24) return res.status(400).send("Household is invalid");
+
+        household = await Household.findOne({ '_id': mongoose.Types.ObjectId(hhid) });
+      }
+
+      //Check if user is part of the specified household
+      if(! await HouseholdUser.findOne({ 'household_id': mongoose.Types.ObjectId(household._id), 'user_id': mongoose.Types.ObjectId(user._id) }))
+        return res.status(403).send("User is not part of household");
+
       const category = await Category.findOne({ '_id': mongoose.Types.ObjectId(cid)});
       if(!category) return res.status(400).send("Category not found");
 
-      const date = Date.parse(reqDate);
-      if(!date) return res.status(400).send("Date is invalid");
+      const date = Date.now();
 
-      const payerIds = [];
-      reqPayers.forEach(async () => {
-        // payerIds.push(reqPayers.);
+      //Create recurring expense document
+      let recurringExpense;
+      let jsonRecurring;
+      if(recurring){
+        recurringExpense = await RecurringExpense.create({
+          'start_date': Date.parse(recurring.startDate),
+          'end_date': Date.parse(recurring.endDate),
+          'frequency': recurring.frequency,
+          'send_reminder': recurring.sendReminder
+        });
+
+        jsonRecurring = {
+          'startDate': recurringExpense.start_date,
+          'endDate': recurringExpense.end_date,
+          'frequency': recurringExpense.frequency,
+          'reminder': recurringExpense.send_reminder
+        }
+      }
+
+      //Create expense document
+      const expense = await Expense.create({
+        'household_id': household._id,
+        'user_id': dbUser._id,
+        'category_id': category._id,
+        'date': date,
+        'amount': amount,
+        'recurring_id': recurringExpense
       });
 
+      //Create payer documents
+      const newPayers = [];
+      if(payers.length == 0){
+        payers.push({
+          "uid": dbUser._id,
+          "percentageToPay": 100
+        });
+      }
+      payers.forEach(async (p) => {
+        const payer = await ExpensePayer.create({
+          'expense_id': expense._id,
+          'payer_id': p.uid,
+          'percentage_to_pay': p.percentageToPay
+        });
+        
+        newPayers.push({
+          'uid': payer.payer_id,
+          'percentageToPay': payer.percentage_to_pay
+        });
+      });
+
+      const json = {
+        'uid': dbUser._id,
+        'hhid': household ? household._id : null,
+        'cid': category._id,
+        'date': date,
+        'amount': amount,
+        'payers': newPayers,
+        'recurring': jsonRecurring
+      }
+
+      return res.status(200).send(JSON.stringify(json));
 
     } catch(err) {
+      console.log(err);
       return res.status(400).send("Error occured while submitting an expense");
     }
   });
