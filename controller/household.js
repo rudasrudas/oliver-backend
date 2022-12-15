@@ -150,9 +150,10 @@ module.exports = function(app){
           //If there's no members left, delete the household
           if(!newHouseholdUserAdmin){
             //TODO: Delete household
+            console.log("Should delete household here");
           }
 
-          const newAdmin = await User.findOneAndUpdate({ '_id': newHouseholdUserAdmin.user_id });
+          const newAdmin = await User.findOne({ '_id': newHouseholdUserAdmin.user_id });
           household.updateOne({ 'admin': mongoose.Types.ObjectId(newAdmin) });
         }
 
