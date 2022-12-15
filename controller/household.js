@@ -222,12 +222,9 @@ module.exports = function (app) {
         }
     });
 
+
     //INVITE HOUSEHOLD
-    app.post(
-        "/invite/household/:hhid/user/:uid",
-        auth.verify,
-        async (req, res) => {
-            //auth.verify
+    app.post( "/invite/household/:hhid/user/:uid", auth.verify, async (req, res) => {
 
             try {
                 //If the invitation is already existent, no new duplicate invitation should be created,
@@ -241,22 +238,12 @@ module.exports = function (app) {
                 const { email } = req.body;
 
                 //The caller must be authenticated as the household’s admin to proceed with the invitation.
-                const household = await Household.findOne({
-                    _id: mongoose.Types.ObjectId(hhid),
-                });
-                if (!household)
-                    return res.status(400).send("Household not defined");
-                const caller = await User.findOne({
-                    _id: mongoose.Types.ObjectId(uid),
-                });
+                const household = await Household.findOne({_id: mongoose.Types.ObjectId(hhid),});
+                if (!household) return res.status(400).send("Household not defined");
+                const caller = await User.findOne({_id: mongoose.Types.ObjectId(uid),});
                 if (!caller) return res.status(400).send("User not defined");
-                const isAdmin = mongoose.Types.ObjectId(household.admin).equals(
-                    mongoose.Types.ObjectId(caller._id)
-                );
-                if (!isAdmin)
-                    return res
-                        .status(403)
-                        .send("User is not household administrator");
+                const isAdmin = mongoose.Types.ObjectId(household.admin).equals( mongoose.Types.ObjectId(caller._id));
+                if (!isAdmin)return res.status(403).send("User is not household administrator");
 
                 //Create household_user who is the admin of the new household
                 const newHouseholdUser = await HouseholdUser.create({
@@ -280,28 +267,19 @@ module.exports = function (app) {
                     };
 
                     switch (mailer.send(mailInfo)) {
-                        case true:
-                            return res
-                                .status(201)
-                                .send(" Invitation created successfully");
-                            break;
-                        case false:
-                            return res
-                                .status(400)
-                                .send("Failed to send message");
-                            break;
+                      case true:return res.status(201).send(" Invitation created successfully");break;
+                        case false:return res.status(400).send("Failed to send message");break;
                     }
                 }
 
-                res.status(403).send(
-                    "User is not household administrator"
-                );
+                res.status(403).send("User is not household administrator");
             } catch (err) {
-                console.log(err);
+                console.log(err); 
                 res.status(400).send(" User ID is invalid or Household ID is invalid");
             }
         }
     );
+
 
     //JOIN HOUSEHOLD
     app.post("/join/household/:hhid", auth.verify, async (req, res) => {
