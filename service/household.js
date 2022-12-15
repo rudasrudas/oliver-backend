@@ -1,4 +1,6 @@
 const Household_user = require('../model/household_user');
+const mongoose = require("mongoose");
+
 
  function isUnderFourHouseholds(user){
 // //get all household users
@@ -16,8 +18,10 @@ const Household_user = require('../model/household_user');
 //     return false;
 }
 
-function underFour(user){
-    if(user.household_users < 5){
+async function underFour(user){
+    const household_users = await Household_user.find({ user_id: mongoose.Types.ObjectId(user._id) });
+
+    if(household_users.length < 5){
         return true;
     }
     return false;

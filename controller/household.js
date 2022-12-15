@@ -3,6 +3,8 @@ const HouseholdUser = require('../model/household_user');
 const User = require('../model/user');
 const ObjectId = require('mongodb').ObjectId;
 const HouseholdService = require("../service/household");
+const MongoClient = require('mongodb').MongoClient;
+
 
 const auth = require("../service/auth");
 const mongoose = require("mongoose");
@@ -28,15 +30,15 @@ module.exports = function(app){
   app.get("/household/:hhid", auth.verify, async (req, res) => { 
     try {
       const hhid = req.params.id;
-      const household = await Household.findOne({ '_id':  mongoose.Types.ObjectId(hhid)});
+      const household = await Household.findOne(hhid);
 
-      const user = auth.getUser(req);
+      const user = await auth.getUser(req);
 
       // check if household exists
       if(household == null) return res.status(400).send("Household ID is invalid");
 
       // check if logged in user is a household member
-      const isHouseholdUser = await HouseholdUser.findOne({ 'household_id': household._id, 'user_id': user._id });
+      const isHouseholdUser = await HouseholdUser.findOne({ 'household_id': household._id, 'user_id': user._id });//problem
       if(!isHouseholdUser) return res.status(403).send("User is not part of the household");
 
       return res.status(200).json(household);
@@ -50,6 +52,8 @@ module.exports = function(app){
   // create a household (and a household_user)
   app.post('/household', auth.verify, async (req, res) =>{ 
     try {
+      const user = await auth.getUser(req);
+
       const { name, address, currency } = req.body;
 
       if(!(name && address && currency)) {
@@ -59,17 +63,28 @@ module.exports = function(app){
       console.log(req.body);
 
           //check if user is in no more than 4 households
-        if(household_service.UnderFour(user)){
+        if(await HouseholdService.underFour(user)){ //problem
 
           const household = await Household.create({
               name,
               address,
-              joinKey: new ObjectId(),
+              join_key: new ObjectId(),
               currency: currency.toUpperCase(),
-              admin: mongoose.Types.ObjectId(user),
+              allow_edit: true,
+              admin: user
           });
+
           console.log("Household created");
-          res.status(200).json(household);
+          const response = {
+            "name": household.name,
+            "address": household.address,
+            "joinKey": household.join_key,
+            "currency": household.currency,
+            "allow_edit": household.allow_edit,
+            "admin": user
+          }
+          console.log(household);
+          res.status(200).send(JSON.stringify(response));
 
           //Create household_user who is the admin of the new household
           const newHouseholdUser = await HouseholdUser.create({
@@ -97,7 +112,7 @@ module.exports = function(app){
       const household = await Household.findOne({ '_id':  mongoose.Types.ObjectId(hhid)});
 
       //check if user is admin
-      const isAdmin = mongoose.Types.ObjectId(household.admin).equals(mongoose.Types.ObjectId(user._id));
+      const isAdmin = mongoose.Types.ObjectId(household.admin).equals(mongoose.Types.ObjectId(user._id)); // problem
        if(isAdmin){
         if(household != null){
           household.remove();
