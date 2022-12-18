@@ -83,23 +83,13 @@ module.exports = function (app) {
                         allow_edit: true,
                         admin: user,
                     });
-
                     console.log("Household created");
-                    const response = {
-                        name: household.name,
-                        address: household.address,
-                        joinKey: household.join_key,
-                        currency: household.currency,
-                        allow_edit: household.allow_edit,
-                        admin: user,
-                    };
                     console.log(household);
-                    res.status(200).send(JSON.stringify(response));
 
                     //Create household_user who is the admin of the new household
                     const newHouseholdUser = await HouseholdUser.create({
-                        householdId: mongoose.Types.ObjectId(household),
-                        userId: mongoose.Types.ObjectId(user),
+                        household_id: mongoose.Types.ObjectId(household),
+                        user_id: mongoose.Types.ObjectId(user),
                         roomSize: 0,
                         balance: 0,
                         created: new Date(),
@@ -107,6 +97,19 @@ module.exports = function (app) {
                     });
                     console.log("Household user created successfully");
                     console.log(newHouseholdUser);
+
+                    const response = {
+                        hhid: household._id,
+                        name: household.name,
+                        address: household.address,
+                        key: household.join_key,
+                        currency: household.currency,
+                        admin_id: user._id,
+                        users: [
+                            newHouseholdUser
+                        ]
+                    };
+                    return res.status(200).send(JSON.stringify(response));
                 }
             }
         } catch (err) {
@@ -121,6 +124,7 @@ module.exports = function (app) {
             const household = await Household.findOne({
                 _id: mongoose.Types.ObjectId(hhid),
             });
+            if(!household) return res.status(400).send("Household not found");
 
             //check if user is admin
             const isAdmin = mongoose.Types.ObjectId(household.admin).equals(
@@ -137,6 +141,7 @@ module.exports = function (app) {
             }
         } catch (err) {
             console.log(err);
+            return res.status(400).send("Error occured while deleting household")
         }
     });
 
@@ -233,22 +238,21 @@ module.exports = function (app) {
                 const user = await auth.getUser(req);
 
                 const hhid = req.params.hhid;
-                const uid = req.params.uid;
+                const email = req.params.uid;
                 const b = req.query.b;
-                const { email } = req.body;
 
                 //The caller must be authenticated as the household’s admin to proceed with the invitation.
                 const household = await Household.findOne({_id: mongoose.Types.ObjectId(hhid),});
                 if (!household) return res.status(400).send("Household not defined");
-                const caller = await User.findOne({_id: mongoose.Types.ObjectId(uid),});
-                if (!caller) return res.status(400).send("User not defined");
-                const isAdmin = mongoose.Types.ObjectId(household.admin).equals( mongoose.Types.ObjectId(caller._id));
+                const invitee = await User.findOne({_id: mongoose.Types.ObjectId(email),});
+                if (!invitee) return res.status(400).send("User not defined");
+                const isAdmin = mongoose.Types.ObjectId(household.admin).equals( mongoose.Types.ObjectId(user._id));
                 if (!isAdmin)return res.status(403).send("User is not household administrator");
 
                 //Create household_user who is the admin of the new household
                 const newHouseholdUser = await HouseholdUser.create({
                     householdId: mongoose.Types.ObjectId(household),
-                    userId: mongoose.Types.ObjectId(user),
+                    userId: mongoose.Types.ObjectId(invitee),
                     roomSize: 0,
                     balance: 0,
                     created: new Date(),
@@ -261,13 +265,13 @@ module.exports = function (app) {
                     const mailInfo = {
                         from: "Oliver <coliver.kea@gmail.com>",
                         to: process.env.EMAIL_USER,
-                        replyTo: caller.email,
+                        replyTo: email,
                         subject: `You been invited to Household ${household.name}`,
-                        text: `Message from ${user} (${email}):`,
+                        text: `You're invited to join a household. Click the following link to do so`,
                     };
 
                     switch (mailer.send(mailInfo)) {
-                      case true:return res.status(201).send(" Invitation created successfully");break;
+                      case true:return res.status(201).send("Invitation created successfully");break;
                         case false:return res.status(400).send("Failed to send message");break;
                     }
                 }
