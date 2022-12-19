@@ -14,7 +14,7 @@ const Expense = require('../model/expense');
 const RecurringExpense = require('../model/recurring_expense');
 
 async function getPersonalInfoHouseholds(uid){
-  const householdUsers = await HouseholdUser.find({ user_id: mongoose.Types.ObjectId(uid) });
+  const householdUsers = await HouseholdUser.find({ user_id: mongoose.Types.ObjectId(uid), status: "active" });
 
   let hhIds = [];
   householdUsers.forEach((hhu) => { hhIds.push(mongoose.Types.ObjectId(hhu.household_id)) });
@@ -34,7 +34,8 @@ async function getPersonalInfoHouseholds(uid){
           "name": hh.name,
           "roomSize": hhu.room_size,
           "canEdit": hh.allow_edit,
-          "canLeave": (hhu.balance >= 0)
+          "canLeave": (hhu.balance >= 0),
+          "joined": hhu.created
         });
       }
     } catch (err) {
@@ -46,7 +47,7 @@ async function getPersonalInfoHouseholds(uid){
 }
 
 async function getOverviewHouseholds(uid){
-  const householdUsers = await HouseholdUser.find({ user_id: mongoose.Types.ObjectId(uid) });
+  const householdUsers = await HouseholdUser.find({ user_id: mongoose.Types.ObjectId(uid), status: "active" });
 
   let hhIds = [];
   householdUsers.forEach((hhu) => { hhIds.push(mongoose.Types.ObjectId(hhu.household_id)) });
@@ -72,6 +73,9 @@ async function getOverviewHouseholds(uid){
           "hhid": hh._id,
           "name": hh.name,
           "balance": hhu.balance,
+          "address": hh.address,
+          "key": hh.join_key,
+          "admin_id": hh.admin,
           "users": jsonUsers,
           "self": uid
         });
@@ -86,7 +90,7 @@ async function getOverviewHouseholds(uid){
 }
 
 async function getUsers(hhid){
-  const householdChildren = await HouseholdUser.find({ household_id: mongoose.Types.ObjectId(hhid) });
+  const householdChildren = await HouseholdUser.find({ household_id: mongoose.Types.ObjectId(hhid), status: "active" });
   let uIds = [];
   householdChildren.forEach((hhu) => { uIds.push(mongoose.Types.ObjectId(hhu.user_id)) });
   return await User.find({ _id: { $in: uIds }});
@@ -163,10 +167,9 @@ module.exports = function(app){
     try {
       const hhid = req.query.household;
       const user = await auth.getUser(req);
-      const { cid, amount, payers, recurring } = req.body;
-      console.log(recurring);
+      const { cid, amount, payers, recurring, name } = req.body;
 
-      if(!(cid && amount && payers)) return res.status(400).send("Insufficient data provided");
+      if(!(cid && amount && payers && name)) return res.status(400).send("Insufficient data provided");
 
       const dbUser = await User.findOne({ 'email': user.email });
       if(!dbUser) return res.status(403).send("Logged in user does not have access to this function");
@@ -179,7 +182,7 @@ module.exports = function(app){
       }
 
       //Check if user is part of the specified household
-      if(! await HouseholdUser.findOne({ 'household_id': mongoose.Types.ObjectId(household._id), 'user_id': mongoose.Types.ObjectId(user._id) }))
+      if(! await HouseholdUser.findOne({ 'household_id': mongoose.Types.ObjectId(household._id), 'user_id': mongoose.Types.ObjectId(user._id), 'status': "active" }))
         return res.status(403).send("User is not part of household");
 
       const category = await Category.findOne({ '_id': mongoose.Types.ObjectId(cid)});
@@ -213,18 +216,21 @@ module.exports = function(app){
         'category_id': category._id,
         'date': date,
         'amount': amount,
+        'name': name,
         'recurring_id': recurringExpense
       });
 
       //Create payer documents
       const newPayers = [];
+      console.log(payers);
       if(payers.length == 0){
         payers.push({
           "uid": dbUser._id,
           "percentageToPay": 100
         });
       }
-      payers.forEach(async (p) => {
+      for await (const p of payers){
+        console.log("Payer: " + p.uid);
         const payer = await ExpensePayer.create({
           'expense_id': expense._id,
           'payer_id': p.uid,
@@ -235,7 +241,7 @@ module.exports = function(app){
           'uid': payer.payer_id,
           'percentageToPay': payer.percentage_to_pay
         });
-      });
+      }
 
       const json = {
         'uid': dbUser._id,
@@ -263,10 +269,10 @@ module.exports = function(app){
       const jsonHouseholds = await getPersonalInfoHouseholds(dbUser._id);
 
       const response = { 
-        "estimatedMonthlyIncome": dbUser.estimatedMonthlyIncome,
-        "newsletter": (subscription != null),
+        "estimatedMonthlyIncome": dbUser.estimated_monthly_income,
+        "newsletter": !subscription,
         "user": user,
-        "households": jsonHouseholds
+        "households": jsonHouseholds,
       } 
       
       res.status(200).send(JSON.stringify(response));
@@ -284,8 +290,8 @@ module.exports = function(app){
       let subscribed;
 
       //Update user info
-      await User.findOneAndUpdate({ '_id': dbUser._id }, {
-        "estimatedMonthlyIncome": json.estimatedMonthlyIncome,
+      const userToUpdate = await dbUser.updateOne({
+        "estimated_monthly_income": json.estimatedMonthlyIncome,
         "name": json.user.name,
         "surname": json.user.surname,
       });
@@ -293,19 +299,20 @@ module.exports = function(app){
       user.surname = json.user.surname;
       
       //Update household room sizes
-      json.households.forEach(async (hhu) => {
+      for await (const hhu of json.households){
         try{
-          const householdUser = await HouseholdUser.findOne({ "userId": dbUser._id, "householdId": hhu.hhid });
+          const householdUser = await HouseholdUser.findOne({ "user_id": dbUser._id, "household_id": hhu.hhid, "status": "active" });
+
           if(householdUser){
             const household = await Household.findById(householdUser.hhid);
             if(household.allowEdit){
-              HouseholdUser.findOneAndUpdate({ "_id": householdUser._id }, { "roomSize": hhu.roomSize });
+              await householdUser.updateOne({ "room_size": hhu.roomSize });
             } else return res.status(400).send("User is not allowed to edit the room size for this household");
           } else return res.status(400).send("User is not part of the chosen household");
         } catch (err) {
           // console.log(err);
         }
-      });
+      }
 
       //Change password
       if(await bcrypt.compare(json.user.password, dbUser.password)){
@@ -329,17 +336,19 @@ module.exports = function(app){
       } else if (!currentSubscription && json.newsletter){ 
         await Subscriber.create({ "email": user.email.toLowerCase() }); //Subscribe
         subscribed = true;
-      }
+      } else if (currentSubscription) subscribed = true;
 
       //Generate response
       const jsonHouseholds = await getPersonalInfoHouseholds(dbUser._id);
 
       const response = { 
-        "estimatedMonthlyIncome": dbUser.estimatedMonthlyIncome,
+        "estimatedMonthlyIncome": dbUser.estimated_monthly_income,
         "newsletter": subscribed,
         "user": user,
         "households": jsonHouseholds
       } 
+
+      console.log(response);
       
       res.status(200).send(JSON.stringify(response));
     } catch (err) {

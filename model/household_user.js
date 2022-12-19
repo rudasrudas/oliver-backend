@@ -6,7 +6,7 @@ const householdUserSchema = new mongoose.Schema({
     room_size: { type: Number },
     balance: { type: Number },
     created: { type: Date },
-    status: {type: String, default: "pending"}
+    status: { type: String, default: "pending" }
 })
 
 module.exports = mongoose.model("household_user", householdUserSchema);

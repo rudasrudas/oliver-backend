@@ -5,6 +5,7 @@ const expenseSchema = new mongoose.Schema({
     user_id: { type: mongoose.ObjectId, ref: 'User' },
     category_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Category' },
     date: { type: Date },
+    name: { type: String },
     amount: { type: Number },
     recurring_id: { type: mongoose.ObjectId, ref: 'Recurring_expense' }
 })

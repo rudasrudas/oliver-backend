@@ -10,6 +10,7 @@
     "express": "^4.18.2",
     "heroku": "^7.66.4",
     "jsonwebtoken": "^8.5.1",
+    "keygenerator": "^1.0.4",
     "mongoose": "^6.7.2",
     "nodemailer": "^6.8.0"
   },

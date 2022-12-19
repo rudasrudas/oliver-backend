@@ -34,7 +34,10 @@ module.exports = function(app){
                 name,
                 surname,
                 email: email.toLowerCase(),
-                password: encryptedPassword
+                password: encryptedPassword,
+                estimated_monthly_income: 0,
+                registered: Date.now(),
+                balance: 0
             });
 
             res.status(200).send("User registered");
