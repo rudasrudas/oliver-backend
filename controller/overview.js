@@ -13,6 +13,8 @@ const ExpensePayer = require('../model/expense_payer');
 const Expense = require('../model/expense');
 const RecurringExpense = require('../model/recurring_expense');
 
+const HouseholdService = require("../service/household");
+
 async function getPersonalInfoHouseholds(uid){
   const householdUsers = await HouseholdUser.find({ user_id: mongoose.Types.ObjectId(uid), status: "active" });
 
@@ -34,7 +36,7 @@ async function getPersonalInfoHouseholds(uid){
           "name": hh.name,
           "roomSize": hhu.room_size,
           "canEdit": hh.allow_edit,
-          "canLeave": (hhu.balance >= 0),
+          "canLeave": (hhu.balance === 0),
           "joined": hhu.created
         });
       }
@@ -243,6 +245,9 @@ module.exports = function(app){
         });
       }
 
+      // Recalculate household stuff
+      await HouseholdService.calculateHouseholdExpenses(household);
+
       const json = {
         'uid': dbUser._id,
         'hhid': household ? household._id : null,
@@ -270,7 +275,7 @@ module.exports = function(app){
 
       const response = { 
         "estimatedMonthlyIncome": dbUser.estimated_monthly_income,
-        "newsletter": !subscription,
+        "newsletter": subscription,
         "user": user,
         "households": jsonHouseholds,
       } 
@@ -286,41 +291,39 @@ module.exports = function(app){
     try {
       const json = req.body;
       const user = await auth.getUser(req);
-      const dbUser = await User.findOne({ "email": user.email });
       let subscribed;
 
       //Update user info
-      const userToUpdate = await dbUser.updateOne({
+      await user.updateOne({
         "estimated_monthly_income": json.estimatedMonthlyIncome,
         "name": json.user.name,
-        "surname": json.user.surname,
+        "surname": json.user.surname
       });
-      user.name = json.user.name;
-      user.surname = json.user.surname;
       
       //Update household room sizes
       for await (const hhu of json.households){
         try{
-          const householdUser = await HouseholdUser.findOne({ "user_id": dbUser._id, "household_id": hhu.hhid, "status": "active" });
+          const householdUser = await HouseholdUser.findOne({ "user_id": user._id, "household_id": hhu.hhid, "status": "active" });
+          if(!householdUser) return res.status(400).send("User is not part of the chosen household");
 
-          if(householdUser){
-            const household = await Household.findById(householdUser.hhid);
-            if(household.allowEdit){
-              await householdUser.updateOne({ "room_size": hhu.roomSize });
-            } else return res.status(400).send("User is not allowed to edit the room size for this household");
-          } else return res.status(400).send("User is not part of the chosen household");
+          const household = await Household.findOne({ "_id": householdUser.household_id });
+          if(!household) return res.status(400).send("Household not found");
+          if(!household.allow_edit) return res.status(400).send("User is not allowed to edit the room size for this household");
+          
+          await householdUser.updateOne({ "room_size": hhu.roomSize });
+          
         } catch (err) {
-          // console.log(err);
+          console.log(err);
         }
       }
 
       //Change password
-      if(await bcrypt.compare(json.user.password, dbUser.password)){
+      if(await bcrypt.compare(json.user.password, user.password)){
         if(json.user.newPassword.length >= 10){
           //Encrypt new password
           encryptedPassword = await bcrypt.hash(json.user.newPassword, 10);
 
-          await User.findOneAndUpdate({ '_id': dbUser._id }, {
+          await User.findOneAndUpdate({ '_id': user._id }, {
             "password": encryptedPassword,
           });
         }  else return res.status(430).send("New password must be at least 10 characters long");
@@ -339,16 +342,14 @@ module.exports = function(app){
       } else if (currentSubscription) subscribed = true;
 
       //Generate response
-      const jsonHouseholds = await getPersonalInfoHouseholds(dbUser._id);
+      const jsonHouseholds = await getPersonalInfoHouseholds(user._id);
 
       const response = { 
-        "estimatedMonthlyIncome": dbUser.estimated_monthly_income,
+        "estimatedMonthlyIncome": json.estimatedMonthlyIncome,
         "newsletter": subscribed,
         "user": user,
         "households": jsonHouseholds
       } 
-
-      console.log(response);
       
       res.status(200).send(JSON.stringify(response));
     } catch (err) {

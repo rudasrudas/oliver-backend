@@ -5,6 +5,7 @@ const Expense = require("../model/expense");
 const ExpensePayer = require("../model/expense_payer");
 const recurringExpense = require("../model/recurring_expense");
 const Category = require("../model/category");
+
 const HouseholdService = require("../service/household");
 
 const mailer = require("../service/mailer");
@@ -47,6 +48,8 @@ module.exports = function (app) {
             const household = await Household.findOne({ _id: mongoose.Types.ObjectId(hhid) });
             if (!household) return res.status(400).send("Household not found");
 
+            // await HouseholdService.calculateHouseholdExpenses(household);
+
             // check if logged in user is a household member
             const householdUser = await HouseholdUser.findOne({
                 household_id: mongoose.Types.ObjectId(household._id),
@@ -75,7 +78,8 @@ module.exports = function (app) {
                     "name": user.name,
                     "surname": user.surname,
                     "balance": hhu.balance,
-                    "expenses": expenses.length
+                    "expenses": expenses.length,
+                    "roomSize": hhu.room_size
                 });
             };
 
@@ -269,7 +273,10 @@ module.exports = function (app) {
 
             //If user is an admin or is leaving the household by themselves, proceed
             if (isAdmin || removingThemselves) {
-                householdUser.remove();
+                await householdUser.updateOne({
+                    left: Date.now(),
+                    status: "inactive"
+                });
 
                 //If the admin is removing themselves, assign new admin
                 if (isAdmin && removingThemselves) {
