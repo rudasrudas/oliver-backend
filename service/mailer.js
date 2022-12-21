@@ -20,8 +20,10 @@ transporter.verify(function (error, success) {
 
 module.exports.send = function send(options){
     transporter.sendMail(options, function(error, info){
-        if (!!error)
+        if (!!error) {
+            console.log(error, info);
             return false;
+        }
         else
             return true;
     });
