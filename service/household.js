@@ -18,7 +18,6 @@ const mongoose = require("mongoose");
 //     return false;
 }
 
-async function underFour(user){
     const household_users = await Household_user.find({ user_id: mongoose.Types.ObjectId(user._id) });
 
     if(household_users.length < 5){
@@ -46,4 +45,4 @@ const household_users = Household_user.find();
 }
 
 
-module.exports = {isUnderFourHouseholds, isHouseholdMember, underFour};
+module.exports = {isUnderFourHouseholds, isHouseholdMember, underFive};
