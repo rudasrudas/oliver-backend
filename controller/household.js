@@ -34,10 +34,14 @@ module.exports = function(app){
 
       const user = await auth.getUser(req);
 
+      const caller = await User.findOne({ 'email': user.email });
+      if(!caller) return res.status(403).send("Logged in user does not have access to this function");
+
       // check if household exists
       if(household == null) return res.status(400).send("Household ID is invalid");
 
       // check if logged in user is a household member
+      const isHouseholdUser = await HouseholdUser.findOne({ 'household_id': household._id, 'user_id': caller._id });
       if(!isHouseholdUser) return res.status(403).send("User is not part of the household");
 
       return res.status(200).json(household);
@@ -52,6 +56,8 @@ module.exports = function(app){
   app.post('/household', auth.verify, async (req, res) =>{ 
     try {
       const user = await auth.getUser(req);
+      const caller = await User.findOne({ 'email': user.email });
+      if(!caller) return res.status(403).send("Logged in user does not have access to this function");
 
       const { name, address, currency } = req.body;
 
@@ -60,6 +66,7 @@ module.exports = function(app){
       } 
       else{
           //check if user is in no more than 4 households
+        if(await HouseholdService.underFive(caller)){              //problem
 
           const household = await Household.create({
               name,
@@ -83,12 +90,18 @@ module.exports = function(app){
 
           //Create household_user who is the admin of the new household
           const newHouseholdUser = await HouseholdUser.create({
+            household_id: household,
+            user_id: user,
+            room_size: 0,
             balance: 0,
             created: new Date(),
           })
           console.log("Household user created successfully");
           console.log(newHouseholdUser);
+          return res.status(200).send(JSON.stringify(response));
         }
+
+        return res.status(403).send("User cannot create another household");
       }
     }
     catch (err) {
@@ -99,9 +112,16 @@ module.exports = function(app){
   app.delete('/household/:hhid', auth.verify, async (req, res) =>{ 
 
     try{
+      const user = await auth.getUser(req);
+      const hhid = req.params.hhid;
       const household = await Household.findOne({ '_id':  mongoose.Types.ObjectId(hhid)});
+      const caller = await User.findOne({ 'email': user.email });
+      if(!caller) return res.status(403).send("Logged in user does not have access to this function");
+
+      if(!household) return res.status(400).send("Household not found");
 
       //check if user is admin
+      const isAdmin = mongoose.Types.ObjectId(household.admin).equals(mongoose.Types.ObjectId(caller._id));
        if(isAdmin){
           household.remove();
           res.status(200).send("Household is deleted");

@@ -18,9 +18,11 @@ const mongoose = require("mongoose");
 //     return false;
 }
 
+async function underFive(user){
     const household_users = await Household_user.find({ user_id: mongoose.Types.ObjectId(user._id) });
 
     if(household_users.length < 5){
+
         return true;
     }
     return false;
